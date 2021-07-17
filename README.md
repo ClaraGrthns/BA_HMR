@@ -12,3 +12,9 @@ $ conda install pytorch torchvision torchaudio -c pytorch
 ```console
 $ pip install -r requirements.txt
 ```
+
+## Start Training:
+(default: default_config.yaml)
+```console
+$ python start_train.py --cfg ./configs/default_config.yaml
+```
