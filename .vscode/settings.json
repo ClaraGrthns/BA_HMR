@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "/usr/local/anaconda3/envs/hmr-ba/bin/python",
+    "jupyter.jupyterServerType": "local"
+}
