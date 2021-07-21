@@ -76,6 +76,7 @@ def _loop(
             loss_batch[loss_key] = criterion[loss_key](pred, target)
             print(i, loss_key, loss_batch[loss_key])
                         #running_loss += loss_batch[loss_key].item()
+
         running_loss = loss_batch["loss_verts"].item()
 
         writer.add_scalar(f'Loss/{name}',
@@ -94,7 +95,7 @@ def _loop(
         for metr_key, pred, target in zip(metrics.keys(), preds[1:], targets[1:]):
             running_metrics[metr_key] += metrics[metr_key](pred, target)
         
-        if i % 50 == 49:    # every 1000 mini-batches...
+        if i % 50 == 49:    # every 50 mini-batches...
                 # ...log the running loss
             writer.add_scalar(f'{name} loss',
                             running_loss / 50,
