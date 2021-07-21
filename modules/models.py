@@ -1,11 +1,11 @@
 import torch
 import torchvision.models as models
 
-resnet_dict = { "resnet18": models.resnet18(pretrained = True),
-                "resnet34": models.resnet34(pretrained = True), 
-                "resnet50": models.resnet50(pretrained = True), 
-                "resnet101": models.resnet101(pretrained = True),
-                "resnet152": models.resnet152(pretrained = True), }
+resnet_dict = { "resnet18": "models.resnet18(pretrained = True)",
+                "resnet34": "models.resnet34(pretrained = True)", 
+                "resnet50": "models.resnet50(pretrained = True)", 
+                "resnet101": "models.resnet101(pretrained = True)",
+                "resnet152": "models.resnet152(pretrained = True)", }
 
 class PoseNetXtreme(torch.nn.Module):
     def __init__(self, encoder, decoder, dim_z=256):
@@ -43,7 +43,7 @@ class PoseDecoder(torch.nn.Module):
 
 def get_resnet(resnet="resnet50"):
     if resnet in ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152"]:
-        return resnet_dict[resnet]
+        return eval(resnet_dict[resnet])
     else:
         return models.resnet50(pretrained = True)
 
