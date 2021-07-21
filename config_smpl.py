@@ -6,7 +6,7 @@ Adapted from opensource project GraphCMR (https://github.com/nkolot/GraphCMR/) a
 
 """
 from os.path import join
-SMPL_path = '../SMPL/models/'
+SMPL_path = '../smpl_models/'
 folder_path = '.'
 JOINT_REGRESSOR_TRAIN_EXTRA = join(folder_path, 'data/J_regressor_extra.npy')
 JOINT_REGRESSOR_H36M_correct = join(folder_path, 'data/J_regressor_h36m_correct.npy')

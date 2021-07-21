@@ -18,6 +18,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         num_required_keypoints:int = 0,
         store_sequences=True,
         store_images=True,
+        load_from_zarr=False,
     ):
         super(ImageWise3DPW, self).__init__()
         self.sequence_path = osp.join(root_path, 'sequenceFiles', split)
@@ -71,6 +72,13 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         return len(self.image_paths)
         
     def __getitem__(self, index):
+        # TODO use zarr to store image-crops with the right resulution on file system.
+        # First use the actual implementation of this class with store_images = True to generate a tensor of cropped images (self.img_cache).
+        # Then convert this tensor to a np.ndarray and use zarr to store it in the local file system.
+        # You should end up with a .zarr file containing all the image crops at their respective index.
+        #
+        # Adapt this class (or write a new one) to load images from the zarr file.
+
         t_start = time.time()
         
         # load image

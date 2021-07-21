@@ -47,7 +47,7 @@ def _loop(
         
         # Calculate Vertices with SMPL-model
         betas_pred, poses_pred = prediction
-        smpl = SMPL(SMPL_MODEL_DIR)
+        smpl = SMPL(SMPL_MODEL_DIR).to(device)
         smpl_out_gt = smpl(betas_gt, poses_gt[:, :3], poses_gt[:, 3:], trans_gt)
         smpl_out_pred = smpl(betas_pred, poses_pred[:, :3], poses_pred[:, 3:], trans_gt)
         
@@ -74,6 +74,7 @@ def _loop(
         loss_batch = dict.fromkeys(criterion.keys(), 0)
         for loss_key, pred, target in zip(criterion.keys(), preds, targets):
             loss_batch[loss_key] = criterion[loss_key](pred, target)
+<<<<<<< HEAD
             print(i, loss_key, loss_batch[loss_key])
                         #running_loss += loss_batch[loss_key].item()
 
@@ -82,6 +83,10 @@ def _loop(
         writer.add_scalar(f'Loss/{name}',
                             running_loss,
                             epoch * len(loader) + i)
+=======
+        running_loss += loss_batch["loss_verts"].item()
+        # running_loss = loss_batch["loss_verts"].item()
+>>>>>>> 4d594cf56571fad819cc3aa76ff38b8bc3b4272a
         
         if train:
             # backward
@@ -95,21 +100,25 @@ def _loop(
         for metr_key, pred, target in zip(metrics.keys(), preds[1:], targets[1:]):
             running_metrics[metr_key] += metrics[metr_key](pred, target)
         
+<<<<<<< HEAD
         if i % 50 == 49:    # every 50 mini-batches...
+=======
+        n = 1000 # TODO rename n and add this setting to the config.yaml
+        if i % n == n-1:    # every 1000 mini-batches...
+>>>>>>> 4d594cf56571fad819cc3aa76ff38b8bc3b4272a
                 # ...log the running loss
             writer.add_scalar(f'{name} loss',
-                            running_loss / 50,
+                            running_loss / n,
                             epoch * len(loader) + i)
             running_loss = 0.0
                 # ...log the metrics
             for metr_key in running_metrics.keys():
-                print("b", running_metrics[metr_key]/ 50, epoch * len(loader) + i)
                 writer.add_scalar(f'{name} metrics: {metr_key}',
-                                 running_metrics[metr_key]/ 50,
+                                 running_metrics[metr_key]/ n,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
         
-    return running_loss / (len(loader)//50)
+    return running_loss / (len(loader)//n)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer, device):
     return _loop(

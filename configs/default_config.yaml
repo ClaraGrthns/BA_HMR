@@ -17,6 +17,9 @@ TRAIN:
 MODEL:
     DIM_Z: 128
     ENCODER: 'resnet50'
+LOSS:
+    loss_smpl: 0
+    loss_verts: 1.
 
 
 
