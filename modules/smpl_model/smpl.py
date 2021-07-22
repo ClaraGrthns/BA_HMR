@@ -7,8 +7,7 @@ import os.path as osp
 from smplx import SMPL as _SMPL
 from smplx.utils import SMPLOutput
 from smplx.lbs import vertices2joints
-import config_smpl as cfg
-
+from .config_smpl import *
 # Map joints to SMPL joints
 JOINT_MAP = {
     'OP Nose': 24, 'OP Neck': 12, 'OP RShoulder': 17,
@@ -51,12 +50,11 @@ JOINT_NAMES = [
 ### From VIBE:
 JOINT_IDS = {JOINT_NAMES[i]: i for i in range(len(JOINT_NAMES))}
 #SMPL_MEAN_PARAMS = osp.join(VIBE_DATA_DIR, 'smpl_mean_params.npz')
-SMPL_MODEL_DIR = cfg.SMPL_Neutral
+SMPL_MODEL_DIR = SMPL_Neutral
 H36M_TO_J17 = [6, 5, 4, 1, 2, 3, 16, 15, 14, 11, 12, 13, 8, 10, 0, 7, 9]
 H36M_TO_J14 = H36M_TO_J17[:14]
 
 ### From METRO:
-H36M_J17_NAME = cfg.H36M_J17_NAME
 
 
 class SMPL(_SMPL):
@@ -65,8 +63,8 @@ class SMPL(_SMPL):
     def __init__(self, *args, **kwargs):
         super(SMPL, self).__init__(*args, **kwargs)
         joints = [JOINT_MAP[i] for i in JOINT_NAMES]
-        J_regressor_extra = np.load(cfg.JOINT_REGRESSOR_TRAIN_EXTRA)
-        J_regressor_h36m_correct = torch.from_numpy(np.load(cfg.JOINT_REGRESSOR_H36M_correct)).float()
+        J_regressor_extra = np.load(JOINT_REGRESSOR_TRAIN_EXTRA)
+        J_regressor_h36m_correct = torch.from_numpy(np.load(JOINT_REGRESSOR_H36M_correct)).float()
         self.register_buffer('J_regressor_h36m_correct', J_regressor_h36m_correct)
         self.register_buffer('J_regressor_extra', torch.tensor(J_regressor_extra, dtype=torch.float32))
         self.joint_map = torch.tensor(joints, dtype=torch.long)

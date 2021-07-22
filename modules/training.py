@@ -1,6 +1,9 @@
 import torch
 import numpy as np
+from tqdm import tqdm
+
 from .smpl_model.smpl import SMPL, SMPL_MODEL_DIR, H36M_J17_NAME
+
 
 def _loop(
     name,
@@ -12,6 +15,7 @@ def _loop(
     metrics,
     epoch,
     writer,
+    log_steps,
     device,
 ):
     
@@ -21,20 +25,19 @@ def _loop(
     else:
         model.eval()
     
-    running_loss = 0
+    running_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    print(running_metrics)
     
     
     
-    for i, batch in enumerate(iter(loader)):
+    for i, batch in tqdm(enumerate(loader), desc= f'Epoch {epoch}: train- and val-loop'):
         
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         trans_gt = batch["trans"].to(device)
-        poses2d = batch["poses2d"].to(device)
-        poses3d = batch["poses3d"].to(device)
+        #poses2d = batch["poses2d"].to(device)
+        #poses3d = batch["poses3d"].to(device)
         
     
         # zero the parameter gradients
@@ -65,62 +68,45 @@ def _loop(
         vertices_pred = vertices_gt - pelvis_pred[:, None, :]
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
-        preds = [(betas_pred, poses_pred), vertices_pred]
-        targets = [(betas_gt, poses_gt), vertices_gt]
-                        #targets = [(betas_gt, poses_gt), vertices_gt, poses2d_gt, poses3d_gt]
-                        #prediction = [(betas_pred, poses_pred), vertices_pred] + list(prediction[2:]) 
+        preds = {"smpl": (betas_pred, poses_pred), "verts": vertices_pred}
+        targets = {"smpl": (betas_gt, poses_gt), "verts": vertices_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
-        loss_batch = dict.fromkeys(criterion.keys(), 0)
-        for loss_key, pred, target in zip(criterion.keys(), preds, targets):
-            loss_batch[loss_key] = criterion[loss_key](pred, target)
-<<<<<<< HEAD
-            print(i, loss_key, loss_batch[loss_key])
-                        #running_loss += loss_batch[loss_key].item()
-
-        running_loss = loss_batch["loss_verts"].item()
-
-        writer.add_scalar(f'Loss/{name}',
-                            running_loss,
-                            epoch * len(loader) + i)
-=======
-        running_loss += loss_batch["loss_verts"].item()
-        # running_loss = loss_batch["loss_verts"].item()
->>>>>>> 4d594cf56571fad819cc3aa76ff38b8bc3b4272a
+        loss_batch = 0
+        for loss_key in criterion.keys():
+            loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
+            loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
+            running_loss[loss_key] += loss.item()
         
         if train:
             # backward
-            loss_batch["loss_verts"].backward()
-                        #loss_total = sum(loss_batch.values())
-                        #loss_total.bachward()
+            loss_batch.backward()
             # optimize
             optimizer.step()
             
         #### Metrics: Mean per vertex error ####
-        for metr_key, pred, target in zip(metrics.keys(), preds[1:], targets[1:]):
-            running_metrics[metr_key] += metrics[metr_key](pred, target)
+        for metr_key in metrics.keys():
+            running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
         
-<<<<<<< HEAD
-        if i % 50 == 49:    # every 50 mini-batches...
-=======
-        n = 1000 # TODO rename n and add this setting to the config.yaml
-        if i % n == n-1:    # every 1000 mini-batches...
->>>>>>> 4d594cf56571fad819cc3aa76ff38b8bc3b4272a
+    
+        if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
-            writer.add_scalar(f'{name} loss',
-                            running_loss / n,
-                            epoch * len(loader) + i)
-            running_loss = 0.0
                 # ...log the metrics
+            for loss_key in running_loss.keys():
+                writer.add_scalar(f'{name} loss: {loss_key}' ,
+                                running_loss[loss_key]/log_steps,
+                                epoch * len(loader) + i)
+                running_loss[loss_key] = 0.0
+
             for metr_key in running_metrics.keys():
                 writer.add_scalar(f'{name} metrics: {metr_key}',
-                                 running_metrics[metr_key]/ n,
+                                 running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
         
-    return running_loss / (len(loader)//n)
+    return sum(running_loss.values())/(len(loader)//log_steps)
 
-def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer, device):
+def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device):
     return _loop(
         name = 'train',
         train=True,
@@ -131,10 +117,11 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer, de
         metrics=metrics,
         epoch=epoch,
         writer=writer,
+        log_steps = log_steps, 
         device=device,
     )
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, device):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device):
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -146,13 +133,14 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, device):
             metrics=metrics,
             epoch=epoch,
             writer=writer,
+            log_steps = log_steps, 
             device=device,
         )
 
 def train_model(model, num_epochs, data_trn, data_val, criterion,
-                metrics, batch_size_trn=1, batch_size_val=None, learning_rate=1e-4, writer=None, device='auto'):
+                metrics, batch_size_trn=1, batch_size_val=None, learning_rate=1e-4, writer=None, log_steps = 200, device='auto'):
     
-    if device is 'auto':
+    if device == 'auto':
         if torch.cuda.is_available():
             device = 'cuda'
         else:
@@ -175,6 +163,6 @@ def train_model(model, num_epochs, data_trn, data_val, criterion,
         shuffle=False,
     )    
     for epoch in range(num_epochs):
-        loss_trn = trn_loop(model=model, optimizer=optimizer, loader_trn=loader_trn, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, device=device)
-        loss_val = val_loop(model=model, loader_val=loader_val, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, device=device)
+        loss_trn = trn_loop(model=model, optimizer=optimizer, loader_trn=loader_trn, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps = log_steps,device=device)
+        loss_val = val_loop(model=model, loader_val=loader_val, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps = log_steps, device=device)
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}')

@@ -64,15 +64,19 @@ def mean_per_vertex_error(vert_pred, vert_gt):
         return error 
     
 def get_metrics_dict():
-    return {'mpve': mean_per_vertex_error,}  
+    return {"verts": mean_per_vertex_error,
+            "smpl": criterion_smpl,}  
 
 
-def get_criterion_dict():
-    # Maps keys to criteria functions
-    return {"loss_smpl": criterion_smpl, 
-            "loss_verts": criterion_verts,}
-            #"loss_kp_2d": criterion_2d_kp,
-            #"loss_kp_3d": criterion_2d_kp,}
+def get_criterion_dict(loss_weights):
+    loss_dict = {"smpl" : criterion_smpl, 
+                 "verts": criterion_verts,
+                 "kp_2d": criterion_kp_2d,
+                 "kp_3d": criterion_kp_3d,}
+    # Maps keys to criteria functions and corresponding weights (only for loss_weights ≠ 0)
+    return {key: (criterion, loss_weights[key]) for key, criterion in loss_dict.items() if loss_weights[key] != 0 }
+
+    
 
 
 
