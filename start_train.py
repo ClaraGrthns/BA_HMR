@@ -10,6 +10,16 @@ from modules.losses_metrics import get_criterion_dict, get_metrics_dict
 from modules.dataset_3DPW import get_train_val_data
 from configs.config import get_cfg_defaults, update_cfg
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Start Training")
+    parser.add_argument('--cfg', type=str, help='cfg file path')
+    args = parser.parse_args()
+    if args.cfg is not None:
+        cfg = update_cfg(args.cfg)
+    else:
+        cfg = get_cfg_defaults()
+    return cfg
+
 def main(cfg):
 
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
@@ -41,14 +51,5 @@ def main(cfg):
     )
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Start Training")
-    parser.add_argument('--cfg', type=str, help='cfg file path')
-    args = parser.parse_args()
-    if args.cfg is not None:
-        cfg = update_cfg(args.cfg)
-    else:
-        cfg = get_cfg_defaults()
-
-     # with open(args.cfg, 'r') as cfg_file:
-     #   cfg = yaml.load(cfg_file, Loader=yaml.CLoader)
+    cfg = parse_args()
     main(cfg)
