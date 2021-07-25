@@ -30,7 +30,7 @@ def _loop(
     
     
     
-    for i, batch in tqdm(enumerate(loader), desc= f'Epoch {epoch}: train- and val-loop'):
+    for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: train- and val-loop'):
         
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)

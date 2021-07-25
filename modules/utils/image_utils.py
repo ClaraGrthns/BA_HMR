@@ -47,6 +47,7 @@ def crop_box(img_tensor, pose2d, border_scale=1.3):
     
     return crop, (x_min, x_max, y_min, y_max)
 
+
 def to_tensor(img):
     if not isinstance(img, np.ndarray):
         img = np.array(img)
@@ -54,20 +55,20 @@ def to_tensor(img):
 
 
 
-def transform(img, size=224):
+def transform(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),         
-                        transforms.Resize(size),
-                        transforms.CenterCrop(size),
+                        transforms.Resize(img_size),
+                        transforms.CenterCrop(img_size),
                         transforms.Normalize(
                             mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225])])
     return trans(img)
 
-def transform_visualize(img, size=224):
+def transform_visualize(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),     
-                        transforms.Resize(size),
+                        transforms.Resize(img_size),
                         transforms.CenterCrop(size),
                         ])
     return trans(img)

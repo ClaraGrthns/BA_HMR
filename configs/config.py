@@ -5,11 +5,18 @@ from yacs.config import CfgNode as CN
 cfg = CN()
 
 cfg.LOGGING = CN()
-cfg.LOGGING.LOGDIR = "./logging"
+cfg.LOGGING.LOGDIR = './logging'
 cfg.LOGGING.LOG_STEPS = 200
 
 cfg.DATASETS = CN()
 cfg.DATASETS.ThreeDPW = '../3DPW'
+
+cfg.STORE_SEQUENCES = True
+cfg.STORE_IMAGES = True
+
+cfg.LOAD_FROM_ZARR = CN()
+cfg.LOAD_FROM_ZARR.TRN = None
+cfg.LOAD_FROM_ZARR.VAL = None
 
 cfg.TRAIN = CN()
 cfg.TRAIN.BATCH_SIZE_TRN = 16

@@ -28,7 +28,14 @@ def main(cfg):
 
     metrics = get_metrics_dict() 
     criterion = get_criterion_dict(cfg.LOSS)
-    train_data, val_data = get_train_val_data(cfg.DATASETS.ThreeDPW , cfg.TRAIN.NUM_REQUIRED_KPS)
+    train_data, val_data = get_train_val_data(data_path=cfg.DATASETS.ThreeDPW, 
+                                              num_required_keypoints=cfg.TRAIN.NUM_REQUIRED_KPS, 
+                                              store_sequences=cfg.STORE_SEQUENCES,
+                                              store_images=cfg.STORE_IMAGES,
+                                              load_from_zarr_trn=cfg.LOAD_FROM_ZARR.TRN,
+                                              load_from_zarr_val=cfg.LOAD_FROM_ZARR.VAL,
+                                             )
+
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER)
     
     dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]

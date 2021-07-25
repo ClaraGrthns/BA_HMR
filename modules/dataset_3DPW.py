@@ -5,6 +5,7 @@ import pickle as pkl
 import numpy as np
 from PIL import Image
 import torch
+import zarr
 
 from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from .utils.data_utils import get_relevant_keypoints
@@ -18,7 +19,8 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         num_required_keypoints:int = 0,
         store_sequences=True,
         store_images=True,
-        load_from_zarr=False,
+        load_from_zarr:str=None,
+        img_size=224,
     ):
         super(ImageWise3DPW, self).__init__()
         self.sequence_path = osp.join(root_path, 'sequenceFiles', split)
@@ -28,6 +30,9 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.store_sequences = store_sequences
         self.sequences = {}
         self.store_images = store_images
+        self.load_from_zarr = load_from_zarr
+        print(self.load_from_zarr)
+
 
         person_ids = []
         image_paths = []
@@ -54,17 +59,17 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.image_paths = image_paths
         self.person_ids = person_ids
         
+        if self.load_from_zarr is not None:
+            #self.imgs = zarr.open(self.load_from_zarr, mode='r') ### Read array from local file system
+            self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
         
         if self.store_images:
             self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
-            self.img_cache = torch.empty(self.__len__(), 3, 224, 224, dtype=torch.float32)
+            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
         
         self.timers = {
-            'load_image': 0,
             'load_sequence': 0,
-            #'image_to_tensor': 0,
-            #'crop_box': 0,
-            'transform_image': 0,
+            'load_image': 0,
             'out': 0,
         }
         
@@ -72,18 +77,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         return len(self.image_paths)
         
     def __getitem__(self, index):
-        # TODO use zarr to store image-crops with the right resulution on file system.
-        # First use the actual implementation of this class with store_images = True to generate a tensor of cropped images (self.img_cache).
-        # Then convert this tensor to a np.ndarray and use zarr to store it in the local file system.
-        # You should end up with a .zarr file containing all the image crops at their respective index.
-        #
-        # Adapt this class (or write a new one) to load images from the zarr file.
-
         t_start = time.time()
-        
-        # load image
-        # img = np.array(Image.open(img_path))
-        t_load_image = time.time()
 
         # load sequence
         img_path = self.image_paths[index]
@@ -107,8 +101,11 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
         t_load_sequence = time.time()
     
-        # Resize Image to 224x224 format with padding
-        if self.store_images and self.img_cache_indicator[index]:
+        # Resize Image to img_sizeximg_size format with padding (resnet: 224x224, hrnet: 256x256)
+        if self.load_from_zarr is not None:
+            #img_tensor = torch.from_numpy(self.imgs[index]) ### Read array from local file system
+            img_tensor = self.imgs[index] ### Read array from memory
+        elif self.store_images and self.img_cache_indicator[index]:
             img_tensor = self.img_cache[index]
         else:
             img = np.array(Image.open(img_path))
@@ -116,13 +113,13 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
         
-            img_tensor = transform(img_tensor)
+            img_tensor = transform(img_tensor, img_size=img_size)
             
             if self.store_images:
                 self.img_cache[index] = img_tensor
                 self.img_cache_indicator[index] = True
                 
-        t_preprocess_image = time.time()
+        t_load_image = time.time()
         
         data = {}
         data['img_path'] = img_path
@@ -138,23 +135,30 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
         t_out = time.time()
         
-        self.timers['load_image'] += t_load_image - t_start
-        self.timers['load_sequence'] += t_load_sequence - t_load_image
-        #self.timers['image_to_tensor'] += t_image_to_tensor - t_load_sequence
-        #self.timers['crop_box'] += t_crop_box - t_image_to_tensor
-        self.timers['transform_image'] += t_preprocess_image - t_load_sequence
-        
-        self.timers['out'] += t_out - t_preprocess_image
+        self.timers['load_sequence'] += t_load_sequence - t_start
+        self.timers['load_image'] += t_load_image - t_load_sequence
+        self.timers['out'] += t_out - t_load_image
 
         return data
     
-def get_train_val_data(data_path, num_required_keypoints=8): 
-    train_data = ImageWise3DPW(
-            root_path=data_path,
-            num_required_keypoints=num_required_keypoints,
-        )
+def get_train_val_data(data_path, 
+                       num_required_keypoints, 
+                       store_sequences,
+                       store_images,
+                       load_from_zarr_trn,
+                       load_from_zarr_val,
+                      ): 
+    
+    train_data = ImageWise3DPW(root_path=data_path,
+                               num_required_keypoints=num_required_keypoints,
+                               store_sequences=store_sequences,
+                               store_images=store_images,
+                               load_from_zarr=load_from_zarr_trn,)
 
-    val_data = ImageWise3DPW(
-        root_path=data_path, 
-        split = 'validation')
+    val_data = ImageWise3DPW(root_path=data_path, 
+                             split = 'validation',
+                             store_sequences=store_sequences,
+                             store_images=store_images,
+                             load_from_zarr=load_from_zarr_val,)
+    
     return train_data, val_data
