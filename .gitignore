@@ -2,7 +2,7 @@
 **/__pycache__
 *.pyc
 */modules/__pycache__/models.cpython-39.pyc
-**/.ipynb_checkpoints
+*.ipynb_checkpoints
 **/.vscode
 *.zarr
 
