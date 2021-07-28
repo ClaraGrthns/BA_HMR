@@ -20,7 +20,7 @@ class SquarePad_tensor:
         padding = (hp,  hp, vp, vp)
         return torch.nn.ZeroPad2d(padding)(img)
     
-def crop_box(img_tensor, pose2d, border_scale=1.3):
+def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
     h, w = img_tensor.shape[-2:]
     
     relevant_pose2d = torch.tensor(get_relevant_keypoints(pose2d))
@@ -36,14 +36,29 @@ def crop_box(img_tensor, pose2d, border_scale=1.3):
         delta = box_wh.max() * ((1.3-1) / 2)
         box_min = (box_min - delta).to(torch.int64)
         box_max = (box_max + delta).to(torch.int64)
+
+        center_xy = torch.tensor((box_max + box_min).detach().numpy().copy())//2
         
         x_min, y_min = box_min
         x_max, y_max = box_max
+        
 
-    # Ensure that box does not exceed image width or height.
-    x_min, y_min = torch.max(torch.zeros(2, dtype=torch.int64), torch.tensor([x_min, y_min], dtype=torch.int64))
-    x_max, y_max = torch.min(torch.tensor(img_tensor.shape[-2:][::-1], dtype=torch.int64), torch.tensor([x_max, y_max], dtype=torch.int64))
-    crop = img_tensor[:, y_min:y_max, x_min:x_max]
+    if padding:
+        w_new = abs(x_max-x_min)
+        h_new = abs(y_max-y_min)
+        max_wh = np.max([w,h])
+
+        hp = int((max_wh - w) / 2)
+        vp = int((max_wh - h) / 2)
+        #distance from bbox to image border (smaller one)
+        limit_pad = abs(torch.min(abs(center_xy - torch.tensor([w,h])), center_xy) - torch.tensor([w_new//2, h_new//2]))
+        
+        #padding s.t. it doesn't go beyond the image borders
+        hp, vp = torch.min(limit_pad, torch.tensor([hp, vp]))
+        crop = img_tensor[:, (y_min-vp):(y_max+vp), (x_min-hp):(x_max+hp)]
+
+    else:
+        crop = img_tensor[:, y_min:y_max, x_min:x_max]
     
     return crop, (x_min, x_max, y_min, y_max)
 
@@ -59,7 +74,6 @@ def transform(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),         
                         transforms.Resize(img_size),
-                        transforms.CenterCrop(img_size),
                         transforms.Normalize(
                             mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225])])
@@ -69,7 +83,6 @@ def transform_visualize(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),     
                         transforms.Resize(img_size),
-                        transforms.CenterCrop(size),
                         ])
     return trans(img)
 
