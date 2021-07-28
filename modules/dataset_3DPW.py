@@ -62,8 +62,8 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         if self.load_from_zarr is not None:
             #self.imgs = zarr.open(self.load_from_zarr, mode='r') ### Read array from local file system
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
-        
-        if self.store_images:
+        elif self.store_images:
+            self.img_size = img_size
             self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
             self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
         
@@ -113,7 +113,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
         
-            img_tensor = transform(img_tensor, img_size=img_size)
+            img_tensor = transform(img_tensor, img_size= self.img_size)
             
             if self.store_images:
                 self.img_cache[index] = img_tensor
@@ -156,7 +156,7 @@ def get_train_val_data(data_path,
                                load_from_zarr=load_from_zarr_trn,)
 
     val_data = ImageWise3DPW(root_path=data_path, 
-                             split = 'validation',
+                             #split = 'validation',
                              store_sequences=store_sequences,
                              store_images=store_images,
                              load_from_zarr=load_from_zarr_val,)

@@ -163,6 +163,6 @@ def train_model(model, num_epochs, data_trn, data_val, criterion,
         shuffle=False,
     )    
     for epoch in range(num_epochs):
-        loss_trn = trn_loop(model=model, optimizer=optimizer, loader_trn=loader_trn, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps = log_steps,device=device)
-        loss_val = val_loop(model=model, loader_val=loader_val, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps = log_steps, device=device)
+        loss_trn = trn_loop(model=model, optimizer=optimizer, loader_trn=loader_trn, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps=log_steps,device=device)
+        loss_val = val_loop(model=model, loader_val=loader_val, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps=log_steps, device=device)
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}')
