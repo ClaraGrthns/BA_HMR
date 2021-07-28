@@ -5,6 +5,7 @@ from tqdm import tqdm
 from .smpl_model.smpl import SMPL, SMPL_MODEL_DIR, H36M_J17_NAME
 
 
+
 def _loop(
     name,
     train,
@@ -26,8 +27,9 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
+    epoch_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    
+    smpl = SMPL(SMPL_MODEL_DIR).to(device)
     
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: train- and val-loop'):
@@ -50,7 +52,7 @@ def _loop(
         
         # Calculate Vertices with SMPL-model
         betas_pred, poses_pred = prediction
-        smpl = SMPL(SMPL_MODEL_DIR).to(device)
+        
         smpl_out_gt = smpl(betas_gt, poses_gt[:, :3], poses_gt[:, 3:], trans_gt)
         smpl_out_pred = smpl(betas_pred, poses_pred[:, :3], poses_pred[:, 3:], trans_gt)
         
@@ -96,6 +98,7 @@ def _loop(
                 writer.add_scalar(f'{name} loss: {loss_key}' ,
                                 running_loss[loss_key]/log_steps,
                                 epoch * len(loader) + i)
+                epoch_loss[loss_key] += running_loss[loss_key]
                 running_loss[loss_key] = 0.0
 
             for metr_key in running_metrics.keys():
@@ -104,11 +107,11 @@ def _loop(
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
         
-    return sum(running_loss.values())/(len(loader)//log_steps)
+    return sum(epoch_loss.values()) / (len(loader) // log_steps)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device):
     return _loop(
-        name = 'train',
+        name='train',
         train=True,
         model=model,
         optimizer=optimizer,
