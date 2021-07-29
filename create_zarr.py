@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_required_keypoints', type=int, help='minimum number of required keypoints', default=8)
     parser.add_argument('--img_size', type=int, help='resnet: 224, hrnet: 256', default=224)
     args = parser.parse_args()
-
+    
     save_img_zarr(
         root_path=args.root_path,
         zarr_path=osp.join(args.out_dir, 'imgs_3dpw_train.zarr'),

@@ -113,7 +113,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
         
-            img_tensor = transform(img_tensor, img_size= self.img_size)
+            img_tensor = transform(img_tensor, img_size=self.img_size)
             
             if self.store_images:
                 self.img_cache[index] = img_tensor

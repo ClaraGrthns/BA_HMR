@@ -7,3 +7,4 @@ smplx==0.1.28
 opencv-python==4.5.3.56
 opendr==0.78
 tqdm==4.61.2
+zarr==2.8.3
