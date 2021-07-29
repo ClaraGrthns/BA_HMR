@@ -1,5 +1,33 @@
 LOGGING:
     LOGDIR: "logging/default_experiment"
+    LOG_STEPS : 200
+
+DATASETS : 
+    ThreeDPW : '../3DPW'
+
+STORE_SEQUENCES : True
+STORE_IMAGES : True
+
+LOAD_FROM_ZARR: 
+    TRN : None
+    VAL : None
+
+TRAIN : 
+    BATCH_SIZE_TRN : 16
+    BATCH_SIZE_VAL : 32
+    NUM_EPOCHS : 5
+    LEARNING_RATE : 1.0e-4
+    NUM_REQUIRED_KPS : 8
+
+MODEL : 
+    DIM_Z : 128
+    ENCODER : 'resnet50'
+
+LOSS : 
+    smpl : 0
+    verts : 1.
+    kp_2d : 0
+    kp_3d : 0
 
 
 

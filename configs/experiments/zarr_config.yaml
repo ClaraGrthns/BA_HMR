@@ -1,6 +1,8 @@
 LOGGING:
     LOGDIR: "logging/default_zarrimgs_experiment"
     
+STORE_IMAGES: False
+    
 LOAD_FROM_ZARR: 
-    TRN: "data/imgs_3dpw.zarr" #TO-DO: Load complete img-data train into zarr format
-    VAL: "data/imgs_3dpw.zarr" #TO-DO: Load complete img-data val into zarr format
+    TRN: "data/imgs_3dpw_train.zarr" #TO-DO: Load complete img-data train into zarr format
+    VAL: "data/imgs_3dpw_val.zarr" #TO-DO: Load complete img-data val into zarr format
