@@ -147,19 +147,22 @@ def get_train_val_data(data_path,
                        store_images,
                        load_from_zarr_trn,
                        load_from_zarr_val,
+                       img_size,
                       ): 
     
     train_data = ImageWise3DPW(root_path=data_path,
                                num_required_keypoints=num_required_keypoints,
                                store_sequences=store_sequences,
                                store_images=store_images,
-                               load_from_zarr=load_from_zarr_trn,)
+                               load_from_zarr=load_from_zarr_trn,
+                               img_size=img_size,)
 
     val_data = ImageWise3DPW(root_path=data_path, 
-                             #split = 'validation',
+                             split = 'validation',
                              num_required_keypoints=num_required_keypoints,
                              store_sequences=store_sequences,
                              store_images=store_images,
-                             load_from_zarr=load_from_zarr_val,)
+                             load_from_zarr=load_from_zarr_val,
+                             img_size=img_size,)
     
     return train_data, val_data

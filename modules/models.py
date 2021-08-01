@@ -1,5 +1,6 @@
 import torch
 import torchvision.models as models
+from hrnet_model_imgnet.models.cls_hrnet import get_cls_net
 
 resnet_dict = { "resnet18": "models.resnet18(pretrained = True)",
                 "resnet34": "models.resnet34(pretrained = True)", 
@@ -41,16 +42,17 @@ class PoseDecoder(torch.nn.Module):
         pose = self.linear_pose(z)
         return beta, pose
 
-def get_resnet(resnet="resnet50"):
-    if resnet in ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152"]:
-        return eval(resnet_dict[resnet])
-    else:
-        return models.resnet50(pretrained = True)
+def get_encoder(encoder:str, cfg_hrnet):
+    if "resnet" in encoder:
+        return eval(resnet_dict[encoder])
+    else: 
+        return get_cls_net(cfg_hrnet)
 
-def get_model(dim_z=128, resnet="resnet50"):
-    resnet_pretrained = get_resnet(resnet)
+
+def get_model(dim_z, encoder, cfg_hrnet):
+    encoder_pretrained = get_encoder(encoder, cfg_hrnet)
     model = PoseNetXtreme(
-        encoder=resnet_pretrained,
+        encoder=encoder_pretrained,
         decoder=PoseDecoder(dim_z, dim_z, dim_z),
         dim_z=dim_z,
     )

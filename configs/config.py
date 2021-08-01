@@ -1,8 +1,7 @@
 from yacs.config import CfgNode as CN
 DEFAULT_YAML_PATH = "configs/experiments/default_config.yaml"
 # Configuration variables
-cfg = CN()
-cfg.set_new_allowed(is_new_allowed=True)
+cfg = CN(new_allowed=True)
 
 
 def get_cfg_defaults():
@@ -13,9 +12,13 @@ def get_cfg_defaults():
     return cfg.clone()
 
 
-def update_cfg(cfg_filepath):
+def update_cfg(cfg_filepath, opts):
+    print(opts)
     cfg = get_cfg_defaults()
-    cfg.merge_from_file(cfg_filepath)
+    if cfg_filepath is not None:
+        cfg.merge_from_file(cfg_filepath)
+    if opts is not None:
+        cfg.merge_from_list(opts)
     return cfg.clone()
 
 

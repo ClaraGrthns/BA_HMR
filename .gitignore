@@ -5,4 +5,7 @@
 *.ipynb_checkpoints
 **/.vscode
 *.zarr
+**test.ipynb
+**test.py
+*.pth
 
