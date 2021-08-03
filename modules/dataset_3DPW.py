@@ -31,7 +31,6 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.sequences = {}
         self.store_images = store_images
         self.load_from_zarr = load_from_zarr
-        print(self.load_from_zarr)
 
 
         person_ids = []

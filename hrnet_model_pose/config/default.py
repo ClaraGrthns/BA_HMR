@@ -42,4 +42,4 @@ def update_hrnet_cfg(cfg_filepath):
 if __name__ == '__main__':
     import sys
     with open(sys.argv[1], 'w') as f:
-        print(_C, file=f)
+        print(cfg, file=f)

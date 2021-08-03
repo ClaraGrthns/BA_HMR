@@ -42,7 +42,10 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 
-cp -R /home/grotehans/3DPW/ /scratch/$SLURM_JOB_ID/
+mkdir /scratch/$SLURM_JOB_ID/3DPW
+cp -R /home/grotehans/3DPW/sequenceFiles /scratch/$SLURM_JOB_ID/3DPW
+#cp /home/grotehans/3DPW.zip /scratch/$SLURM_JOB_ID/
+#unzip /scratch/$SLURM_JOB_ID/3DPW.zip
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 
