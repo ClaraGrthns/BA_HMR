@@ -6,7 +6,7 @@ torchvision==0.10.0
 matplotlib==3.3.4
 smplx==0.1.28
 opencv-python==4.5.3.56
-opendr==0.78
+#opendr==0.78
 tqdm==4.61.2
 zarr==2.8.3
 yacs==0.1.8

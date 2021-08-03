@@ -1,5 +1,5 @@
 LOGGING:
-    LOGDIR: "logging/default_experiment"
+    LOGDIR: "~/BA_HMR/logging/default_experiment"
     LOG_STEPS: 200
 DATASETS: 
     THREEDPW: '../3DPW'

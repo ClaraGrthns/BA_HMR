@@ -63,4 +63,5 @@ def main(cfg, cfg_hrnet):
     
 if __name__ == '__main__':
     cfg, cfg_hrnet = parse_args()
+    print(cfg)
     main(cfg, cfg_hrnet)

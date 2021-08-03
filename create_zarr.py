@@ -5,8 +5,8 @@ from modules.utils.zarr_imgs import save_img_zarr
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Save training and validation imgs as zarr")
-    parser.add_argument('--root_path', type=str, help='path to dataset 3DPW', default='../3DPW')
-    parser.add_argument('--out_dir', type=str, help='path to directory of zarr', default='data')
+    parser.add_argument('--root_path', type=str, help='path to dataset 3DPW', default='~/3DPW')
+    parser.add_argument('--out_dir', type=str, help='path to directory of zarr', default='~/BA_HMR/data')
     parser.add_argument('--num_required_keypoints', type=int, help='minimum number of required keypoints', default=8)
     parser.add_argument('--encoder', type=str, help='Encoder Options: resnet or hrnet', default='resnet')
     args = parser.parse_args()
