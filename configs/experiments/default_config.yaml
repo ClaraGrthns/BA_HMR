@@ -9,6 +9,7 @@ IMG_SIZE: 244
 LOAD_FROM_ZARR: 
     TRN: None
     VAL: None
+LOAD_IDS_IMGPATHS: "./data/ids_imgpaths"
 TRAIN: 
     BATCH_SIZE_TRN: 16
     BATCH_SIZE_VAL: 32

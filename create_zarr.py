@@ -1,6 +1,6 @@
 import os.path as osp
 import argparse
-from modules.utils.zarr_imgs import save_img_zarr
+from modules.utils.save_imgs import save_img_zarr
 
 
 if __name__ == '__main__':
