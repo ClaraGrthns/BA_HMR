@@ -9,7 +9,9 @@ IMG_SIZE: 244
 LOAD_FROM_ZARR: 
     TRN: None
     VAL: None
-LOAD_IDS_IMGPATHS: "./data/ids_imgpaths"
+LOAD_IDS_IMGPATHS: 
+    TRN: "~/BA_HMR/data/ids_imgpaths/ids_paths_train_min8_kps_ids_img_list.pickle"
+    VAL: "~/BA_HMR/data/ids_imgpaths/ids_paths_validation_min8_kps_ids_img_list.pickle"
 TRAIN: 
     BATCH_SIZE_TRN: 16
     BATCH_SIZE_VAL: 32

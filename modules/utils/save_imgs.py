@@ -19,10 +19,10 @@ def save_img_zarr(root_path:str,
                   num_chunks=None,
                   img_size=224,
                   save_id_paths=False,
-                  out_path=None):
+                  out_dir=None):
                     
     id_img_list = get_ids_imgspaths(root_path=root_path, 
-                                    out_path=out_path,
+                                    out_dir=out_dir,
                                     split=split,
                                     num_required_keypoints=num_required_keypoints,
                                     save_ids_paths=save_id_paths)
@@ -57,7 +57,7 @@ def save_img_zarr(root_path:str,
         img_zarr[index] = img_tensor
 
 def get_ids_imgspaths(root_path:str="../3DPW",
-                      out_path:str="./data/ids_imgpaths",
+                      out_dir:str="./data/ids_imgpaths",
                       split:str='train',
                       num_required_keypoints:int=8,
                       save_ids_paths=True,):
@@ -90,7 +90,7 @@ def get_ids_imgspaths(root_path:str="../3DPW",
 
     id_img_list = {"person_ids": person_ids, "image_paths": image_paths}
     if save_ids_paths:
-        with open(osp.join(out_path, f'ids_paths_{split}_min{num_required_keypoints}_kps_ids_img_list.pickle'), 'wb') as fp:
+        with open(osp.join(out_dir, f'ids_paths_{split}_min{num_required_keypoints}_kps_ids_img_list.pickle'), 'wb') as fp:
             pkl.dump(id_img_list, fp)
     id_img_list['seq_poses'] = seq_poses
     return id_img_list

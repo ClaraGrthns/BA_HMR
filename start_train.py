@@ -40,6 +40,8 @@ def main(cfg, cfg_hrnet):
                                               load_from_zarr_trn=cfg.LOAD_FROM_ZARR.TRN,
                                               load_from_zarr_val=cfg.LOAD_FROM_ZARR.VAL,
                                               img_size=cfg.IMG_SIZE,
+                                              load_ids_imgpaths_trn=cfg.LOAD_IDS_IMGPATHS.TRN,
+                                              load_ids_imgpaths_val=cfg.LOAD_IDS_IMGPATHS.VAL,
                                              )
 
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
