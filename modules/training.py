@@ -32,7 +32,7 @@ def _loop(
     smpl = SMPL(SMPL_MODEL_DIR).to(device)
     
     
-    for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: train- and val-loop'):
+    for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
@@ -70,8 +70,8 @@ def _loop(
         vertices_pred = vertices_gt - pelvis_pred[:, None, :]
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
-        preds = {"smpl": (betas_pred, poses_pred), "verts": vertices_pred}
-        targets = {"smpl": (betas_gt, poses_gt), "verts": vertices_gt}
+        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0

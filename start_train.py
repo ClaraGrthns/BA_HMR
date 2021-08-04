@@ -43,11 +43,12 @@ def main(cfg, cfg_hrnet):
                                               load_ids_imgpaths_trn=cfg.LOAD_IDS_IMGPATHS.TRN,
                                               load_ids_imgpaths_val=cfg.LOAD_IDS_IMGPATHS.VAL,
                                              )
+    print("length train and val data:", len(train_data), len(val_data))
 
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
     
-    dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
-    writer.add_graph(model, dummy_input)
+    #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
+    #writer.add_graph(model, dummy_input)
 
     train_model(
         model=model,

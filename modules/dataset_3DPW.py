@@ -60,7 +60,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         if load_ids_imgpaths is not None: 
             with open(load_ids_imgpaths, "rb") as fp:
                   ids_imgpaths_lists = pkl.load(fp)
-            image_path = ids_imgpaths_lists['image_paths']
+            image_paths = ids_imgpaths_lists['image_paths']
             person_ids = ids_imgpaths_lists['person_ids']
 
         self.image_paths = image_paths

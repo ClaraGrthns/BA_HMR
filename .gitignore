@@ -8,4 +8,5 @@
 **test.ipynb
 **test.py
 *.pth
-
+*.err
+*.out

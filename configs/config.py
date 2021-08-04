@@ -13,7 +13,7 @@ def get_cfg_defaults():
 
 
 def update_cfg(cfg_filepath, opts):
-    print('opts': opts)
+    print('opts:', opts)
     cfg = get_cfg_defaults()
     if cfg_filepath is not None:
         cfg.merge_from_file(cfg_filepath)

@@ -45,7 +45,7 @@ mkdir /scratch/$SLURM_JOB_ID/3DPW
 cp -R /home/grotehans/3DPW/sequenceFiles /scratch/$SLURM_JOB_ID/3DPW
 #cp /home/grotehans/3DPW.zip /scratch/$SLURM_JOB_ID/
 #unzip /scratch/$SLURM_JOB_ID/3DPW.zip
-cp /home/grotehans/BA_HMR/data/ids_imgpaths/ /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/BA_HMR/data/ids_imgpaths/ /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 
@@ -63,6 +63,6 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_0_TF2_4_1_PT1_7_1.si
 "LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
 "LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
 "LOAD_IDS_IMGPATHS.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths/ids_paths_train_min8_kps_ids_img_list.pickle \
-"LOAD_IDS_IMGPATHS.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths/ds_paths_validation_min8_kps_ids_img_list.pickle \
+"LOAD_IDS_IMGPATHS.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths/ids_paths_validation_min8_kps_ids_img_list.pickle 
 echo DONE!
 

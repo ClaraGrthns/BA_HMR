@@ -10,3 +10,5 @@ opencv-python==4.5.3.56
 tqdm==4.61.2
 zarr==2.8.3
 yacs==0.1.8
+scipy==1.7
+chumpy==0.7
