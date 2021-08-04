@@ -3,6 +3,9 @@ import argparse
 import pprint
 from torch.utils.tensorboard import SummaryWriter
 import torch
+import os
+import os.path as osp
+
 from modules.models import get_model
 from modules.training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
@@ -21,7 +24,7 @@ def parse_args():
     args = parser.parse_args()
     cfg = update_cfg(args.cfg, args.opts)
     cfg_hrnet = None
-    if cfg.MODEL.ENCODER == "hrnet":
+    if "hrnet" in cfg.MODEL.ENCODER:
         cfg_hrnet = update_hrnet_cfg(args.cfg_hrnet)
     return cfg, cfg_hrnet
 
@@ -44,11 +47,10 @@ def main(cfg, cfg_hrnet):
                                               load_ids_imgpaths_val=cfg.LOAD_IDS_IMGPATHS.VAL,
                                              )
     print("length train and val data:", len(train_data), len(val_data))
-
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
     
-    #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
-    #writer.add_graph(model, dummy_input)
+    dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
+    writer.add_graph(model, dummy_input)
 
     train_model(
         model=model,
@@ -62,9 +64,10 @@ def main(cfg, cfg_hrnet):
         learning_rate=cfg.TRAIN.LEARNING_RATE,
         writer=writer,
         log_steps = cfg.LOGGING.LOG_STEPS,
+        checkpoint_dir=cfg.OUT_DIR,
+        cfgs=(cfg, cfg_hrnet),
     )
     
 if __name__ == '__main__':
     cfg, cfg_hrnet = parse_args()
-    print(cfg)
     main(cfg, cfg_hrnet)

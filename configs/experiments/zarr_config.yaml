@@ -1,8 +1,8 @@
 LOGGING:
-    LOGDIR: "home/grotehans/BA_HMR/logging/default_zarrimgs_experiment"
+    LOGDIR: "./logging/"
     
 STORE_IMAGES: False
     
 LOAD_FROM_ZARR: 
-    TRN: "home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr" #TO-DO: Load complete img-data train into zarr format
-    VAL: "home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr" #TO-DO: Load complete img-data val into zarr formatls
+    TRN: "/home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr" 
+    VAL: "/home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr" 

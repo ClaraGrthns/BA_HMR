@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from tqdm import tqdm
+import os.path as osp
 
 from .smpl_model.smpl import SMPL, SMPL_MODEL_DIR, H36M_J17_NAME
 
@@ -18,6 +19,8 @@ def _loop(
     writer,
     log_steps,
     device,
+    checkpoint_dir=None,
+    cfgs=None,
 ):
     
     if train:
@@ -30,6 +33,8 @@ def _loop(
     epoch_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
     smpl = SMPL(SMPL_MODEL_DIR).to(device)
+    min_mpve = float('inf')
+    
     
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
@@ -90,6 +95,17 @@ def _loop(
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
         
+        if name == "validate" and running_metrics['VERTS'] < min_mpve:
+            save_checkpoint(model=model, 
+                            optimizer=optimizer,
+                            loss=sum(running_loss.values())/((i%log_steps)+1),
+                            name='min_mpve', 
+                            epoch=epoch,
+                            iteration=(epoch * len(loader) + i),
+                            checkpoint_dir=checkpoint_dir,
+                            cfgs=cfgs,)
+            min_mpve = running_metrics['VERTS']
+        
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
@@ -106,10 +122,9 @@ def _loop(
                                  running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
-        
     return sum(epoch_loss.values()) / (len(loader) // log_steps)
 
-def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device):
+def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
         name='train',
         train=True,
@@ -120,11 +135,11 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
         metrics=metrics,
         epoch=epoch,
         writer=writer,
-        log_steps = log_steps, 
+        log_steps=log_steps, 
         device=device,
     )
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, checkpoint_dir, cfgs,):
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -138,10 +153,13 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
             writer=writer,
             log_steps = log_steps, 
             device=device,
+            checkpoint_dir=checkpoint_dir,
+            cfgs=cfgs,
         )
 
-def train_model(model, num_epochs, data_trn, data_val, criterion,
-                metrics, batch_size_trn=1, batch_size_val=None, learning_rate=1e-4, writer=None, log_steps = 200, device='auto'):
+def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
+                batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
+                writer=None, log_steps = 200, device='auto', checkpoint_dir=None, cfgs=None,):
     
     if device == 'auto':
         if torch.cuda.is_available():
@@ -166,6 +184,46 @@ def train_model(model, num_epochs, data_trn, data_val, criterion,
         shuffle=False,
     )    
     for epoch in range(num_epochs):
-        loss_trn = trn_loop(model=model, optimizer=optimizer, loader_trn=loader_trn, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps=log_steps,device=device)
-        loss_val = val_loop(model=model, loader_val=loader_val, criterion=criterion, metrics=metrics, epoch=epoch, writer=writer, log_steps=log_steps, device=device)
+        loss_trn = trn_loop(model=model, 
+                            optimizer=optimizer, 
+                            loader_trn=loader_trn, 
+                            criterion=criterion, 
+                            metrics=metrics, 
+                            epoch=epoch, 
+                            writer=writer, 
+                            log_steps=log_steps,
+                            device=device)
+
+        save_checkpoint(model=model, 
+                        optimizer=optimizer,
+                        loss=loss_trn,
+                        name='latest_ckpt', 
+                        epoch=epoch,
+                        iteration=(epoch+1)*len(loader_trn),
+                        checkpoint_dir=checkpoint_dir,
+                        cfgs=cfgs,)
+
+        loss_val = val_loop(model=model, 
+                            loader_val=loader_val,
+                            criterion=criterion, 
+                            metrics=metrics, 
+                            epoch=epoch, 
+                            writer=writer, 
+                            log_steps=log_steps, 
+                            device=device,
+                            checkpoint_dir=checkpoint_dir,
+                            cfgs=cfgs)
+        
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}')
+
+def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs):
+    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
+    save_model = {
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'running_loss': loss,
+            'config_model': cfgs,
+            }
+    if name == 'latest_ckpt':
+        save_model['optimizer_state_dict'] = optimizer.state_dict()
+    torch.save(save_model, filepath)
