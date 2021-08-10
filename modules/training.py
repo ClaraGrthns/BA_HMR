@@ -25,8 +25,7 @@ def _loop(
 ):
     
     if train:
-        model.train()
-        
+        model.train() 
     else:
         model.eval()
     
@@ -44,7 +43,6 @@ def _loop(
         #poses2d = batch["poses2d"].to(device)
         #poses3d = batch["poses3d"].to(device)
         
-    
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -53,21 +51,17 @@ def _loop(
         prediction = model(img)
    
         # Calculate Vertices with SMPL-model
-        betas_pred, poses_pred = prediction
-        
-        smpl_out_gt = smpl(betas_gt, poses_gt[:, :3], poses_gt[:, 3:], trans_gt)
-        smpl_out_pred = smpl(betas_pred, poses_pred[:, :3], poses_pred[:, 3:], trans_gt)
-        
+        betas_pred, poses_pred = prediction        
+        smpl_out_gt = smpl(betas_gt, poses_gt[:, 3:], poses_gt[:, :3], trans_gt)
+        smpl_out_pred = smpl(betas_pred, poses_pred[:, 3:], poses_pred[:, :3], trans_gt)
         vertices_gt = smpl_out_gt.vertices
         vertices_pred = smpl_out_pred.vertices
-        
+
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_gt = smpl.get_h36m_joints(vertices_gt)
         joints3d_pred = smpl.get_h36m_joints(vertices_pred)
-
         pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
-        pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:]
-        
+        pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_gt - pelvis_pred[:, None, :]
         
@@ -81,6 +75,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
+            epoch_loss[loss_key] += loss.item()
         
         if train:
             # backward
@@ -91,8 +86,9 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-        '''
+       
         if name == "validate" and running_metrics['VERTS'] < min_mpve:
+            '''
             save_checkpoint(model=model, 
                             optimizer=optimizer,
                             loss=sum(running_loss.values())/((i%log_steps)+1),
@@ -101,8 +97,8 @@ def _loop(
                             iteration=(epoch * len(loader) + i),
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,)
+            '''
             min_mpve = running_metrics['VERTS']
-        '''
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
@@ -111,7 +107,6 @@ def _loop(
                 writer.add_scalar(f'{name} loss: {loss_key}' ,
                                 running_loss[loss_key]/log_steps,
                                 epoch * len(loader) + i)
-                epoch_loss[loss_key] += running_loss[loss_key]
                 running_loss[loss_key] = 0.0
 
             for metr_key in running_metrics.keys():
@@ -119,7 +114,7 @@ def _loop(
                                  running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
-    return sum(epoch_loss.values()) / (len(loader) // log_steps), min_mpve
+    return sum(epoch_loss.values())/len(loader), min_mpve
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -216,7 +211,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             cfgs=cfgs,
                             min_mpve=min_mpve,)
         
-        print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}')
+        print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
 
 def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs):
     filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
