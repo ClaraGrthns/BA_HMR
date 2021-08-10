@@ -42,29 +42,29 @@ def main(cfg, cfg_hrnet):
                                     load_ids_imgpaths_seq_trn=cfg.LOAD_IDS_IMGPATHS_SEQ.TRN,
                                     load_ids_imgpaths_seq_val=cfg.LOAD_IDS_IMGPATHS_SEQ.VAL,
                                     )
-
     print("length of val data:", len(val_data))
-    model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
+    model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet).to(device)
     loader_val = torch.utils.data.DataLoader(dataset=val_data,
                                              batch_size=cfg.TRAIN.BATCH_SIZE_VAL,
                                              shuffle=False,
                                              )
+    print(len(loader_val))
     min_mpve = float('inf') 
-
-    for epoch in range(cfg.TRAIN.NUM_EPOCHS):
-        loss_val, min_mpve = val_loop(model=model, 
-                                    loader_val=loader_val,
-                                    criterion=criterion, 
-                                    metrics=metrics, 
-                                    epoch=epoch, 
-                                    writer=writer, 
-                                    log_steps=cfg.LOGGING.LOG_STEPS, 
-                                    device=device,
-                                    checkpoint_dir=cfg.OUT_DIR,
-                                    cfgs=(cfg, cfg_hrnet),
-                                    min_mpve=min_mpve,)
-        print(f'Epoch: {epoch}; Loss Val: {loss_val}, min mpve: {min_mpve}')
+    loss_val, min_mpve = val_loop(model=model, 
+                                loader_val=loader_val,
+                                criterion=criterion, 
+                                metrics=metrics, 
+                                epoch=0, 
+                                writer=writer, 
+                                log_steps=cfg.LOGGING.LOG_STEPS, 
+                                device=device,
+                                checkpoint_dir=cfg.OUT_DIR,
+                                cfgs=(cfg, cfg_hrnet),
+                                min_mpve=min_mpve,)
+    print(f'Epoch 0: Loss Val: {loss_val}, min mpve: {min_mpve}')
 
 if __name__ == '__main__':
     cfg, cfg_hrnet = parse_args()
-    main(cfg, cfg_hrnet)
+    pprint.pprint(cfg)
+    for i in range(10):
+        main(cfg, cfg_hrnet)

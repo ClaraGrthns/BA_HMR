@@ -14,7 +14,6 @@ from configs.config import update_cfg
 from hrnet_model_imgnet.config.default import update_hrnet_cfg
 
 def parse_args():
-
     parser = argparse.ArgumentParser(description="Start Training")
     parser.add_argument('--cfg', type=str, help='cfg file path to yaml')
     parser.add_argument('--opts', nargs="+", help='configuration options (key must already exist!)')
@@ -29,7 +28,6 @@ def parse_args():
     return cfg, cfg_hrnet
 
 def main(cfg, cfg_hrnet):
-
     pprint.pprint(cfg)
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
     writer.add_text('config', pprint.pformat(cfg), 0)
