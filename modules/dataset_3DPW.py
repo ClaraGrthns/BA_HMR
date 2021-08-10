@@ -8,7 +8,7 @@ import torch
 import zarr
 
 from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from .utils.data_utils import get_relevant_keypoints
+from .utils.data_utils import get_ids_imgspaths_seq 
 
 
 class ImageWise3DPW(torch.utils.data.Dataset):
@@ -21,50 +21,28 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         store_images=True,
         load_from_zarr:str=None,
         img_size=224,
-        load_ids_imgpaths=None,
+        load_ids_imgpaths_seq=None,
     ):
         super(ImageWise3DPW, self).__init__()
-        self.sequence_path = osp.join(root_path, 'sequenceFiles', split)
-        self.seq_names = [seq_name.split('.pkl')[0] for seq_name in sorted(os.listdir(self.sequence_path))]
         self.split = split
         self.num_required_keypoints = num_required_keypoints
         self.store_sequences = store_sequences
-        self.sequences = {}
         self.store_images = store_images
         self.load_from_zarr = load_from_zarr
-        print(self.load_from_zarr)
-        print(load_ids_imgpaths)
+ 
+        ids_imgpaths_seq = get_ids_imgspaths_seq(root_path=root_path,
+                                                split=self.split,
+                                                load_from_pkl=load_ids_imgpaths_seq,
+                                                num_required_keypoints=self.num_required_keypoints,
+                                                store_as_pkl=False)
+        self.image_paths = ids_imgpaths_seq['image_paths']
+        self.person_ids = ids_imgpaths_seq['person_ids']
 
+        if self.store_sequences:
+            self.sequences = ids_imgpaths_seq['sequences']
+        else: 
+            self.sequence_path = osp.join(root_path, 'sequenceFiles', split)
 
-        person_ids = []
-        image_paths = []
-        for seq_name in self.seq_names:
-            seq_file_name = os.path.join(self.sequence_path, f'{seq_name}.pkl')
-            with open(seq_file_name, 'rb') as f:
-                seq = pkl.load(f, encoding='latin1')
-            if store_sequences:
-                self.sequences[seq_name] = seq
-
-            if load_ids_imgpaths is None:
-                img_dir = osp.join(root_path, 'imageFiles', seq_name)
-                num_people = len(seq['poses'])
-                for img_idx, img_name in enumerate(sorted(os.listdir(img_dir))):
-                    image_path = osp.join(img_dir,img_name)
-                    for person_id in range(num_people):
-                        pose2d = seq['poses2d'][person_id][img_idx]
-                        relevant_poses2d = get_relevant_keypoints(pose2d)
-                        if len(relevant_poses2d) >= self.num_required_keypoints:
-                            image_paths.append(image_path)
-                            person_ids.append(person_id)
-        
-        if load_ids_imgpaths is not None: 
-            with open(load_ids_imgpaths, "rb") as fp:
-                  ids_imgpaths_lists = pkl.load(fp)
-            image_paths = ids_imgpaths_lists['image_paths']
-            person_ids = ids_imgpaths_lists['person_ids']
-
-        self.image_paths = image_paths
-        self.person_ids = person_ids
         if self.load_from_zarr is not None:
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
         elif self.store_images:
@@ -98,9 +76,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             
         index_seq = int((img_name.split('.')[0]).split('_')[1])
         person_id = self.person_ids[index]
-        
-        poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)
-        
+        poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)    
         poses3d = torch.tensor(seq['jointPositions'][person_id][index_seq], dtype=torch.float32) 
         poses3d = poses3d.view(-1, 24,3)
         
@@ -114,11 +90,8 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         else:
             img = np.array(Image.open(img_path))
             img_tensor = to_tensor(img)
-        
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
-        
             img_tensor = transform(img_tensor, img_size=self.img_size)
-            
             if self.store_images:
                 self.img_cache[index] = img_tensor
                 self.img_cache_indicator[index] = True
@@ -152,8 +125,8 @@ def get_train_val_data(data_path,
                        load_from_zarr_trn,
                        load_from_zarr_val,
                        img_size,
-                       load_ids_imgpaths_trn,
-                       load_ids_imgpaths_val,
+                       load_ids_imgpaths_seq_trn,
+                       load_ids_imgpaths_seq_val,
                       ): 
     
     train_data = ImageWise3DPW(root_path=data_path,
@@ -162,7 +135,8 @@ def get_train_val_data(data_path,
                                store_images=store_images,
                                load_from_zarr=load_from_zarr_trn,
                                img_size=img_size,
-                               load_ids_imgpaths=load_ids_imgpaths_trn,)
+                               load_ids_imgpaths_seq=load_ids_imgpaths_seq_trn,
+                               )
 
     val_data = ImageWise3DPW(root_path=data_path, 
                              split = 'validation',
@@ -171,6 +145,7 @@ def get_train_val_data(data_path,
                              store_images=store_images,
                              load_from_zarr=load_from_zarr_val,
                              img_size=img_size,
-                             load_ids_imgpaths=load_ids_imgpaths_val,)
+                             load_ids_imgpaths_seq=load_ids_imgpaths_seq_val,
+                             )
     
     return train_data, val_data

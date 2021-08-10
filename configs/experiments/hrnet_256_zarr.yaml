@@ -1,9 +1,0 @@
-LOGGING:
-    LOGDIR: "logging/hrnet_256_zarr_experiment"   
-STORE_IMAGES: False
-IMG_SIZE: 256   
-LOAD_FROM_ZARR: 
-    TRN: "data/imgs_3dpw_train.zarr" #TO-DO: Load complete img-data train into zarr format
-    VAL: "data/imgs_3dpw_valid.zarr" #TO-DO: Load complete img-data val into zarr format
-MODEL:
-  ENCODER: 'hrnet40'

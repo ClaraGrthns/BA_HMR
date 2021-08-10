@@ -1,0 +1,9 @@
+LOGGING:
+    LOGDIR: "./logging/zarr_hrnet40_ep50_is256/"   
+STORE_IMAGES: False
+IMG_SIZE: 256   
+LOAD_FROM_ZARR: 
+    TRN: "./data/imgs_3dpw_hrnet_train.zarr"
+    VAL: "./data/imgs_3dpw_hrnet_valid.zarr" 
+MODEL:
+  ENCODER: 'hrnet40'

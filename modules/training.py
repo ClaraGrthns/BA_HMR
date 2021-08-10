@@ -21,6 +21,7 @@ def _loop(
     device,
     checkpoint_dir=None,
     cfgs=None,
+    min_mpve=None,
 ):
     
     if train:
@@ -32,10 +33,7 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0)
     epoch_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    smpl = SMPL(SMPL_MODEL_DIR).to(device)
-    min_mpve = float('inf')
-    
-    
+    smpl = SMPL(SMPL_MODEL_DIR).to(device)    
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
@@ -122,7 +120,7 @@ def _loop(
                                  running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
-    return sum(epoch_loss.values()) / (len(loader) // log_steps)
+    return sum(epoch_loss.values()) / (len(loader) // log_steps), min_mpve
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -139,7 +137,7 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
         device=device,
     )
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, checkpoint_dir, cfgs,):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, checkpoint_dir, cfgs, min_mpve):
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -155,6 +153,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
             device=device,
             checkpoint_dir=checkpoint_dir,
             cfgs=cfgs,
+            min_mpve=min_mpve,
         )
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
@@ -182,9 +181,12 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
         dataset=data_val,
         batch_size=batch_size_val,
         shuffle=False,
-    )    
+    )
+
+    min_mpve = float('inf') 
+
     for epoch in range(num_epochs):
-        loss_trn = trn_loop(model=model, 
+        loss_trn, _ = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 
                             criterion=criterion, 
@@ -203,7 +205,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                         checkpoint_dir=checkpoint_dir,
                         cfgs=cfgs,)
 
-        loss_val = val_loop(model=model, 
+        loss_val, min_mpve = val_loop(model=model, 
                             loader_val=loader_val,
                             criterion=criterion, 
                             metrics=metrics, 
@@ -212,7 +214,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             log_steps=log_steps, 
                             device=device,
                             checkpoint_dir=checkpoint_dir,
-                            cfgs=cfgs)
+                            cfgs=cfgs,
+                            min_mpve=min_mpve,)
         
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}')
 
