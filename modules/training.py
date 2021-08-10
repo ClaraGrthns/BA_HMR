@@ -92,7 +92,7 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-        
+        '''
         if name == "validate" and running_metrics['VERTS'] < min_mpve:
             save_checkpoint(model=model, 
                             optimizer=optimizer,
@@ -103,7 +103,7 @@ def _loop(
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,)
             min_mpve = running_metrics['VERTS']
-        
+        '''
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
