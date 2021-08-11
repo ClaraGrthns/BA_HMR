@@ -5,7 +5,7 @@ import torch
 from matplotlib import pyplot as plt
 
 from .data_utils import get_relevant_keypoints
-#from .render import Renderer
+from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
 from ..smpl_model.smpl import SMPL, SMPL_MODEL_DIR, get_smpl_faces
 
@@ -95,7 +95,7 @@ def plot_tensor(img_tensor):
     
 # INPUT: betas: torch.Tensor([1, 10]), poses: torch.Tensor([1,72]), trans: torch.Tensor([1,3])
 # cam_pose: torch.Tensor([1,4,4]), cam_intr: torch.Tensor([3, 3])
-def visualize_mesh(img, beta, pose, cam_pose, cam_intr, trans = None):
+def visualize_mesh(img, cam_pose, cam_intr, beta, pose, trans=None, vertices=None):
     cam_intr = cam_intr.detach().numpy()
 
     if isinstance(img, torch.Tensor):
@@ -105,11 +105,12 @@ def visualize_mesh(img, beta, pose, cam_pose, cam_intr, trans = None):
  ## get smpl faces and vertices ##
 
     #SMPLX Model: 
-    smpl = SMPL(SMPL_MODEL_DIR)
-    body_pose = pose[:,3:]
-    global_orient = pose[:,:3]
-    out = smpl(beta, body_pose, global_orient, trans) ## SMPLX with translation
-    vertices = out.vertices
+    if vertices is None:   
+        smpl = SMPL(SMPL_MODEL_DIR)
+        body_pose = pose[:,3:]
+        global_orient = pose[:,:3]
+        out = smpl(beta, body_pose, global_orient, trans) ## SMPLX with translation
+        vertices = out.vertices
     vertices = vertices[0].detach().numpy()
     faces = get_smpl_faces()
     
@@ -118,14 +119,11 @@ def visualize_mesh(img, beta, pose, cam_pose, cam_intr, trans = None):
     #vertices = smpl(pose = pose, beta = beta[:10]) + trans
     #faces = smpl.faces.cpu().numpy()
     
-
     # camera: rotation matrix, t, f and center
     cam_rot = rotation_matrix_to_angle_axis(cam_pose[None, :3, :3]).detach().numpy().ravel() 
     cam_t = cam_pose[0:3,3]
     cam_f = np.array([cam_intr[0,0],cam_intr[1,1]])
     cam_center = cam_intr[0:2,2]
-
-
 
     # Visualize Mesh 
     renderer = Renderer(faces=faces)

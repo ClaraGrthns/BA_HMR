@@ -49,7 +49,7 @@ def _loop(
 
         #### Forward ####
         prediction = model(img)
-
+   
         # Calculate Vertices with SMPL-model
         betas_pred, poses_pred = prediction        
         smpl_out_gt = smpl(betas_gt, poses_gt[:, 3:], poses_gt[:, :3], trans_gt)
