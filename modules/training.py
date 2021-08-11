@@ -63,7 +63,7 @@ def _loop(
         pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
-        vertices_pred = vertices_gt - pelvis_pred[:, None, :]
+        vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
@@ -88,7 +88,6 @@ def _loop(
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
        
         if name == "validate" and running_metrics['VERTS'] < min_mpve:
-            '''
             save_checkpoint(model=model, 
                             optimizer=optimizer,
                             loss=sum(running_loss.values())/((i%log_steps)+1),
@@ -97,7 +96,6 @@ def _loop(
                             iteration=(epoch * len(loader) + i),
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,)
-            '''
             min_mpve = running_metrics['VERTS']
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...

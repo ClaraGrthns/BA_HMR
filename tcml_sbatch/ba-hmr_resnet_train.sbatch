@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=6:00:00
+#SBATCH --time=10:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -41,10 +41,11 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-mkdir /scratch/$SLURM_JOB_ID/3DPW
-cp -R /home/grotehans/3DPW/sequenceFiles /scratch/$SLURM_JOB_ID/3DPW
+#mkdir /scratch/$SLURM_JOB_ID/3DPW
+#cp -R /home/grotehans/3DPW/sequenceFiles /scratch/$SLURM_JOB_ID/3DPW
 #cp /home/grotehans/3DPW.zip /scratch/$SLURM_JOB_ID/
 #unzip /scratch/$SLURM_JOB_ID/3DPW.zip
+
 cp -R /home/grotehans/BA_HMR/data/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
