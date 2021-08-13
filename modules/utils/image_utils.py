@@ -22,7 +22,6 @@ class SquarePad_tensor:
     
 def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
     h, w = img_tensor.shape[-2:]
-    
     relevant_pose2d = torch.tensor(get_relevant_keypoints(pose2d))
 
     if relevant_pose2d.nelement() == 0:
@@ -35,32 +34,29 @@ def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
         box_wh = box_max - box_min
         delta = box_wh.max() * ((1.3-1) / 2)
         box_min = (box_min - delta).to(torch.int64)
+        box_min = torch.max(box_min, torch.tensor([0,0])) #limited to the image borders
         box_max = (box_max + delta).to(torch.int64)
-
+        
         center_xy = torch.tensor((box_max + box_min).detach().numpy().copy())//2
         
         x_min, y_min = box_min
-        x_max, y_max = box_max
-        
+        x_max, y_max = box_max  
 
     if padding:
         w_new = abs(x_max-x_min)
         h_new = abs(y_max-y_min)
-        max_wh = np.max([w,h])
+        max_wh = np.max([w_new,h_new])
 
-        hp = int((max_wh - w) / 2)
-        vp = int((max_wh - h) / 2)
+        hp = int((max_wh - w_new) / 2)
+        vp = int((max_wh - h_new) / 2)
         #distance from bbox to image border (smaller one)
         limit_pad = abs(torch.min(abs(center_xy - torch.tensor([w,h])), center_xy) - torch.tensor([w_new//2, h_new//2]))
-        
         #padding s.t. it doesn't go beyond the image borders
         hp, vp = torch.min(limit_pad, torch.tensor([hp, vp]))
-        crop = img_tensor[:, (y_min-vp):(y_max+vp), (x_min-hp):(x_max+hp)]
+        x_min, y_min = torch.max(torch.tensor([x_min-hp,y_min-vp ]), torch.tensor([0,0]))
+        x_max, y_max = x_max+hp, y_max+vp
 
-    else:
-        crop = img_tensor[:, y_min:y_max, x_min:x_max]
-    
-    return crop, (x_min, x_max, y_min, y_max)
+    return img_tensor[:, y_min:y_max, x_min:x_max], (x_min, x_max, y_min, y_max)
 
 
 def to_tensor(img):
@@ -94,7 +90,7 @@ def plot_tensor(img_tensor):
     
     
 # INPUT: betas: torch.Tensor([1, 10]), poses: torch.Tensor([1,72]), trans: torch.Tensor([1,3])
-# cam_pose: torch.Tensor([1,4,4]), cam_intr: torch.Tensor([3, 3])
+# cam_pose: torch.Tensor([4,4]), cam_intr: torch.Tensor([3, 3])
 def visualize_mesh(img, cam_pose, cam_intr, beta, pose, trans=None, vertices=None):
     cam_intr = cam_intr.detach().numpy()
 
