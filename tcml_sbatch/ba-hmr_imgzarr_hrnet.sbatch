@@ -17,7 +17,7 @@
 #SBATCH --mem-per-cpu=3G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:0
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
 #SBATCH --time=24:00:00
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=job.%J.err
+#SBATCH --error=jobs/job.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=job.%J.out
+#SBATCH --output=jobs/job.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
