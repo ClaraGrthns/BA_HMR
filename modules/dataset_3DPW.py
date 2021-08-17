@@ -101,14 +101,14 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         data = {}
         data['img_path'] = img_path
         data['img'] = img_tensor
-        data['betas'] = torch.tensor(seq['betas'][person_id][:10], dtype=torch.float32)
+        data['betas'] = torch.tensor(seq['betas'][person_id][None, :10], dtype=torch.float32)
         data['cam_pose'] = torch.tensor(seq['cam_poses'][index_seq], dtype=torch.float32)    
-        data['poses'] = torch.tensor(seq['poses'][person_id][index_seq], dtype=torch.float32) 
+        data['poses'] = torch.tensor(seq['poses'][person_id][None, index_seq], dtype=torch.float32) 
         data['poses2d'] = poses2d 
         data['poses3d'] = poses3d
         data['cam_pose'] = torch.tensor(seq['cam_poses'][index_seq], dtype=torch.float32)  
         data['cam_intr'] = torch.tensor(seq['cam_intrinsics'], dtype=torch.float32)
-        data['trans'] = torch.tensor(seq['trans'][person_id][index_seq], dtype=torch.float32)
+        data['trans'] = torch.tensor(seq['trans'][person_id][None, index_seq], dtype=torch.float32)
         
         t_out = time.time()
         
