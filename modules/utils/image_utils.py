@@ -46,7 +46,6 @@ def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
         w_new = abs(x_max-x_min)
         h_new = abs(y_max-y_min)
         max_wh = np.max([w_new,h_new])
-
         hp = int((max_wh - w_new) / 2)
         vp = int((max_wh - h_new) / 2)
         #distance from bbox to image border (smaller one)
@@ -70,6 +69,7 @@ def transform(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),         
                         transforms.Resize(img_size),
+                        transforms.CenterCrop(img_size),
                         transforms.Normalize(
                             mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225])])
@@ -77,7 +77,8 @@ def transform(img, img_size=224):
 
 def transform_visualize(img, img_size=224):
     trans = transforms.Compose([  
-                        SquarePad_tensor(),     
+                        SquarePad_tensor(), 
+                        transforms.CenterCrop(img_size),
                         transforms.Resize(img_size),
                         ])
     return trans(img)

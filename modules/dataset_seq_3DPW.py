@@ -122,11 +122,9 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         self.timers['load_image'] += t_load_image - t_load_sequence
         self.timers['out'] += t_out - t_load_image
 
-        return data
-                    
-        
-    def set_chunks():
-        self.seq_chunks = get_chunks_seq(self.image_list)
+        return data         
+    def set_chunks(self):
+        self.seq_chunks = get_chunks_seq(img_list=self.img_list)
     
 def get_train_val_data(data_path:str,
                        num_required_keypoints:int=0,
