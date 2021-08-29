@@ -72,8 +72,7 @@ class SMPL(nn.Module):
         Output:
             Vertices: Bx6890x3 
         '''
-        #device = pose.device
-        device = torch.device("cpu")
+        device = pose.device
         batch_size = pose.shape[0]
         
         v_template = self.v_template[None, :]

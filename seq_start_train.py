@@ -8,6 +8,7 @@ from modules.models import get_model_seq
 from modules.seq_training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
 from modules.dataset_seq_3DPW import get_train_val_data
+from modules.utils.data_utils import mk_dir_checkpoint
 from configs.config import update_cfg
 from hrnet_model_imgnet.config.default import update_hrnet_cfg
 
@@ -50,6 +51,8 @@ def main(cfg, cfg_hrnet):
     dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     writer.add_graph(model, dummy_input)
 
+    checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet), type='seqwise' )
+
     train_model(
         model=model,
         num_epochs=cfg.TRAIN.NUM_EPOCHS,
@@ -62,7 +65,7 @@ def main(cfg, cfg_hrnet):
         learning_rate=cfg.TRAIN.LEARNING_RATE,
         writer=writer,
         log_steps = cfg.LOGGING.LOG_STEPS,
-        checkpoint_dir=cfg.OUT_DIR,
+        checkpoint_dir = checkpoint_dir,
         cfgs=(cfg, cfg_hrnet),
     )
     

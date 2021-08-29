@@ -225,15 +225,3 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             min_mpve=min_mpve,)
         
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
-
-def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs):
-    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
-    save_model = {
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'running_loss': loss,
-            'config_model': cfgs,
-            }
-    if name == 'latest_ckpt':
-        save_model['optimizer_state_dict'] = optimizer.state_dict()
-    torch.save(save_model, filepath)
