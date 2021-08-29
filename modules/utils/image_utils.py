@@ -5,7 +5,7 @@ import torch
 from matplotlib import pyplot as plt
 
 from .data_utils import get_relevant_keypoints
-#from .render import Renderer
+from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
 from ..smpl_model.smpl import SMPL, SMPL_MODEL_DIR, get_smpl_faces
 
@@ -32,7 +32,7 @@ def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
         box_max = (relevant_pose2d.max(dim=0)[0])
         # scale box
         box_wh = box_max - box_min
-        delta = box_wh.max() * ((1.3-1) / 2)
+        delta = box_wh.max() * ((border_scale-1) / 2)
         box_min = (box_min - delta).to(torch.int64)
         box_min = torch.max(box_min, torch.tensor([0,0])) #limited to the image borders
         box_max = (box_max + delta).to(torch.int64)
@@ -61,11 +61,14 @@ def crop_box(img_tensor, pose2d, border_scale=1.3, padding = True):
 def to_tensor(img):
     if not isinstance(img, np.ndarray):
         img = np.array(img)
-    return torch.from_numpy(img.astype(np.float32)).permute(2,0,1)/255.
+    if img.ndim == 2:
+         return torch.from_numpy(img.astype(np.float32))/255.
+    else:
+        return torch.from_numpy(img.astype(np.float32)).permute(2,0,1)/255.
 
 
 
-def transform(img, img_size=224):
+def transform(img, img_size=244):
     trans = transforms.Compose([  
                         SquarePad_tensor(),         
                         transforms.Resize(img_size),

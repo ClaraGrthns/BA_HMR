@@ -32,7 +32,7 @@ def main(cfg, cfg_hrnet):
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
     writer.add_text('config', pprint.pformat(cfg), 0)
 
-    metrics = get_metrics_dict() 
+    metrics = get_metrics_dict(cfg.METRIC) 
     criterion = get_criterion_dict(cfg.LOSS)
     train_data, val_data = get_train_val_data(data_path=cfg.DATASETS.THREEDPW, 
                                               num_required_keypoints=cfg.TRAIN.NUM_REQUIRED_KPS, 

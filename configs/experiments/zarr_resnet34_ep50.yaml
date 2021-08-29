@@ -8,3 +8,6 @@ TRAIN:
     NUM_EPOCHS: 50
 MODEL: 
     ENCODER: 'resnet34'
+LOAD_CHUNKS_SEQ:
+    TRN: "./data/img_list_paths_seq/img_list_paths_seq_train_min8_kps.pickle"
+    VAL: "./data/img_list_paths_seq/img_list_paths_seq_validation_min8_kps.pickle"

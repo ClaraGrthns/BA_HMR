@@ -4,19 +4,18 @@ This file contains the definition of the SMPL model
 It is adapted from opensource project GraphCMR (https://github.com/nkolot/GraphCMR/)
 """
 from __future__ import division
-from lib.models.smpl import SMPL_MODEL_DIR
 import os.path as osp
 import torch
 import torch.nn as nn
 import numpy as np
 import scipy.sparse
+from .config_smpl import *
+from ..utils.geometry import batch_rodrigues
 try:
     import cPickle as pickle
 except ImportError:
-    import pickle
+    import pickle  
 
-from lib.utils.geometric_layers import rodrigues
-import data.config as cfg
 
 
 class SMPL(nn.Module):
@@ -24,12 +23,7 @@ class SMPL(nn.Module):
     def __init__(self, gender='neutral'):
         super(SMPL, self).__init__()
 
-        if gender=='m':
-            model_file= cfg.SMPL_Male
-        elif gender=='f':
-            model_file=cfg.SMPL_Female
-        else:
-            model_file=cfg.SMPL_Neutral
+        model_file=SMPL_Neutral
 
         smpl_model = pickle.load(open(model_file, 'rb'), encoding='latin1') 
         J_regressor = smpl_model['J_regressor'].tocoo()
@@ -61,41 +55,44 @@ class SMPL(nn.Module):
         self.J = None
         self.R = None
         
-        J_regressor_extra = torch.from_numpy(np.load(cfg.JOINT_REGRESSOR_TRAIN_EXTRA)).float()
+        J_regressor_extra = torch.from_numpy(np.load(JOINT_REGRESSOR_TRAIN_EXTRA)).float()
         self.register_buffer('J_regressor_extra', J_regressor_extra)
-        self.joints_idx = cfg.JOINTS_IDX
+        self.joints_idx = JOINTS_IDX
 
-        J_regressor_h36m_correct = torch.from_numpy(np.load(cfg.JOINT_REGRESSOR_H36M_correct)).float()
+        J_regressor_h36m_correct = torch.from_numpy(np.load(JOINT_REGRESSOR_H36M_correct)).float()
         self.register_buffer('J_regressor_h36m_correct', J_regressor_h36m_correct)
 
 
-    def forward(self, pose, beta):
+    def forward(self, pose, beta, transl=None):
+        '''
+        Input: 
+            Pose: Bx72, 
+            Beta: Bx10
+            Trans: Bx3
+        Output:
+            Vertices: Bx6890x3 
+        '''
         #device = pose.device
         device = torch.device("cpu")
         batch_size = pose.shape[0]
         
         v_template = self.v_template[None, :]
-        print("v-template", v_template.shape)
         shapedirs = self.shapedirs.view(-1,10)[None, :].expand(batch_size, -1, -1)
         beta = beta[:, :, None]
         v_shaped = torch.matmul(shapedirs, beta).view(-1, 6890, 3) + v_template
-        print("batch_size", batch_size, "shapedirs", shapedirs.shape, "beta", beta.shape)
-        print("v_shaped", v_shaped.shape)
         # batched sparse matmul not supported in pytorch
         J = []
         for i in range(batch_size):
             J.append(torch.matmul(self.J_regressor, v_shaped[i]))
         J = torch.stack(J, dim=0)
-        print('j', J.shape)
         # input it rotmat: (bs,24,3,3)
         if pose.ndimension() == 4:
             R = pose
         # input it rotmat: (bs,72)
         elif pose.ndimension() == 2:
             pose_cube = pose.view(-1, 3) # (batch_size * 24, 1, 3)
-            R = rodrigues(pose_cube).view(batch_size, 24, 3, 3)
+            R = batch_rodrigues(pose_cube).view(batch_size, 24, 3, 3)
             R = R.view(batch_size, 24, 3, 3)
-            print("R", R.shape)
         I_cube = torch.eye(3)[None, None, :].to(device)
         # I_cube = torch.eye(3)[None, None, :].expand(theta.shape[0], R.shape[1]-1, -1, -1)
         lrotmin = (R[:,1:,:] - I_cube).view(batch_size, -1)
@@ -118,8 +115,11 @@ class SMPL(nn.Module):
         G = G - rest
         T = torch.matmul(self.weights, G.permute(1,0,2,3).contiguous().view(24,-1)).view(6890, batch_size, 4, 4).transpose(0,1)
         rest_shape_h = torch.cat([v_posed, torch.ones_like(v_posed)[:, :, [0]]], dim=-1)
-        print("T", T.shape, "rest_shape",rest_shape_h[:, :, :, None].shape)
         v = torch.matmul(T, rest_shape_h[:, :, :, None])[:, :, :3, 0]
+
+        if transl is not None:
+            for i, trans in enumerate(transl):
+                v[i] = v[i]+ trans
         return v
 
     def get_joints(self, vertices):
@@ -133,7 +133,7 @@ class SMPL(nn.Module):
         joints = torch.einsum('bik,ji->bjk', [vertices, self.J_regressor])
         joints_extra = torch.einsum('bik,ji->bjk', [vertices, self.J_regressor_extra])
         joints = torch.cat((joints, joints_extra), dim=1)
-        joints = joints[:, cfg.JOINTS_IDX]
+        joints = joints[:, JOINTS_IDX]
         return joints
 
     def get_h36m_joints(self, vertices):
@@ -168,7 +168,6 @@ class SparseMM(torch.autograd.Function):
 def spmm(sparse, dense):
     return SparseMM.apply(sparse, dense)
 
-
 def scipy_to_pytorch(A, U, D):
     """Convert scipy sparse matrices to pytorch sparse matrix."""
     ptU = []
@@ -187,7 +186,6 @@ def scipy_to_pytorch(A, U, D):
         ptD.append(torch.sparse.FloatTensor(i, v, d.shape)) 
 
     return ptU, ptD
-
 
 def adjmat_sparse(adjmat, nsize=1):
     """Create row-normalized sparse graph adjacency matrix."""
@@ -219,3 +217,72 @@ def get_graph_params(filename, nsize=1):
     U, D = scipy_to_pytorch(A, U, D)
     A = [adjmat_sparse(a, nsize=nsize) for a in A]
     return A, U, D
+
+class Mesh(object):
+    """Mesh object that is used for handling certain graph operations."""
+    def __init__(self, filename=SMPL_sampling_matrix,
+                 num_downsampling=1, nsize=1, device=torch.device('cuda')):
+        if torch.cuda.is_available():
+                device = torch.device('cuda')
+        else:
+                device = torch.device('cpu')
+        self._A, self._U, self._D = get_graph_params(filename=filename, nsize=nsize)
+        # self._A = [a.to(device) for a in self._A]
+        self._U = [u.to(device) for u in self._U]
+        self._D = [d.to(device) for d in self._D]
+        self.num_downsampling = num_downsampling
+
+        # load template vertices from SMPL and normalize them
+        smpl = SMPL()
+        ref_vertices = smpl.v_template
+        center = 0.5*(ref_vertices.max(dim=0)[0] + ref_vertices.min(dim=0)[0])[None]
+        ref_vertices -= center
+        ref_vertices /= ref_vertices.abs().max().item()
+
+        self._ref_vertices = ref_vertices.to(device)
+        self.faces = smpl.faces.int().to(device)
+
+    # @property
+    # def adjmat(self):
+    #     """Return the graph adjacency matrix at the specified subsampling level."""
+    #     return self._A[self.num_downsampling].float()
+
+    @property
+    def ref_vertices(self):
+        """Return the template vertices at the specified subsampling level."""
+        ref_vertices = self._ref_vertices
+        for i in range(self.num_downsampling):
+            ref_vertices = torch.spmm(self._D[i], ref_vertices)
+        return ref_vertices
+
+    def downsample(self, x, n1=0, n2=None):
+        """Downsample mesh."""
+        if n2 is None:
+            n2 = self.num_downsampling
+        if x.ndimension() < 3:
+            for i in range(n1, n2):
+                x = spmm(self._D[i], x)
+        elif x.ndimension() == 3:
+            out = []
+            for i in range(x.shape[0]):
+                y = x[i]
+                for j in range(n1, n2):
+                    y = spmm(self._D[j], y)
+                out.append(y)
+            x = torch.stack(out, dim=0)
+        return x
+
+    def upsample(self, x, n1=1, n2=0):
+        """Upsample mesh."""
+        if x.ndimension() < 3:
+            for i in reversed(range(n2, n1)):
+                x = spmm(self._U[i], x)
+        elif x.ndimension() == 3:
+            out = []
+            for i in range(x.shape[0]):
+                y = x[i]
+                for j in reversed(range(n2, n1)):
+                    y = spmm(self._U[j], y)
+                out.append(y)
+            x = torch.stack(out, dim=0)
+        return x

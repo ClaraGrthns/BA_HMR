@@ -1,0 +1,32 @@
+LOGGING:
+    LOGDIR: "./logging/seq_zarr_resnet34_ep50/"  
+STORE_IMAGES: True
+LOAD_FROM_ZARR: 
+    TRN: "./data/imgs_3dpw_train.zarr" 
+    VAL: "./data/imgs_3dpw_valid.zarr" 
+TRAIN:
+    NUM_EPOCHS: 50
+    LEN_CHUNKS: 8 
+    BATCH_SIZE_TRN: 4
+    BATCH_SIZE_VAL: 8
+MODEL: 
+    ENCODER: 'resnet34'
+LOAD_CHUNKS_SEQ:
+    TRN: 'data/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle'
+    VAL: 'data/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle'
+LOSS: 
+    SMPL: 0.
+    VERTS: 0.
+    KP_2D: 0.
+    KP_3D: 0.
+    VERTS_FULL: 1.
+    VERTS_SUB2: .25
+    VERTS_SUB: .5
+METRIC: 
+    SMPL: 1.
+    VERTS: 0.
+    KP_2D: 0.
+    KP_3D: 0.
+    VERTS_FULL: 1.
+    VERTS_SUB2: 1.
+    VERTS_SUB: 1.

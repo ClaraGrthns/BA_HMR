@@ -8,7 +8,7 @@ import torch
 import zarr
 
 from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from .utils.data_utils import get_chunks_seq, rand_partition
+from .utils.data_utils import get_chunks_img_paths_list_seq
 
 
 class SequenceWise3DPW(torch.utils.data.Dataset):
@@ -21,7 +21,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         store_sequences=True,
         store_images=True,
         load_from_zarr:str=None,
-        img_size=224,
+        img_size=244,
         load_chunks_seq=None,
     ):
         super(SequenceWise3DPW, self).__init__()
@@ -32,15 +32,15 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         self.load_from_zarr = load_from_zarr
         self.len_chunks = len_chunks
  
-        chunks, img_list, img_paths, sequences = get_chunks_seq(data_path=data_path,
-                                                                     split=self.split,
-                                                                     load_from_pkl=load_chunks_seq,
-                                                                     len_chunks=self.len_chunks,
-                                                                     num_required_keypoints=self.num_required_keypoints,
-                                                                    )
+        chunks, img_seqs_list, img_paths, sequences = get_chunks_img_paths_list_seq(data_path=data_path,
+                                                                split=self.split,
+                                                                load_from_pkl=load_chunks_seq,
+                                                                len_chunks=self.len_chunks,
+                                                                num_required_keypoints=self.num_required_keypoints,
+                                                            )
         self.seq_chunks = chunks
         self.img_paths = img_paths
-        self.img_list = img_list
+        self.img_seqs_list = img_seqs_list
         
         if self.store_sequences:
             self.sequences = sequences
@@ -107,14 +107,14 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         data = {}
         data['img_path'] = img_paths
         data['img'] = imgs_tensor
-        data['betas'] = torch.tensor(seq['betas'][person_id][None,:10], dtype=torch.float32)
+        data['betas'] = torch.tensor(seq['betas'][person_id][:10], dtype=torch.float32).expand(self.len_chunks, -1)
         data['cam_pose'] = torch.tensor(seq['cam_poses'][seq_indices], dtype=torch.float32)    
-        data['poses'] = torch.tensor(seq['poses'][person_id][None, seq_indices], dtype=torch.float32) 
+        data['poses'] = torch.tensor(seq['poses'][person_id][seq_indices], dtype=torch.float32) 
         data['poses2d'] = poses2d 
         data['poses3d'] = poses3d
         data['cam_pose'] = torch.tensor(seq['cam_poses'][seq_indices], dtype=torch.float32)  
         data['cam_intr'] = torch.tensor(seq['cam_intrinsics'], dtype=torch.float32)
-        data['trans'] = torch.tensor(seq['trans'][person_id][None, seq_indices], dtype=torch.float32)
+        data['trans'] = torch.tensor(seq['trans'][person_id][seq_indices], dtype=torch.float32)
         
         t_out = time.time()
         
@@ -124,7 +124,8 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
 
         return data         
     def set_chunks(self):
-        self.seq_chunks = get_chunks_seq(img_list=self.img_list)
+        chunks,_,_,_ = get_chunks_img_paths_list_seq(img_seqs_list=self.img_seqs_list)
+        self.seq_chunks = chunks
     
 def get_train_val_data(data_path:str,
                        num_required_keypoints:int=0,
@@ -133,7 +134,7 @@ def get_train_val_data(data_path:str,
                        store_images:bool=True,
                        load_from_zarr_trn:str=None,
                        load_from_zarr_val:str=None,
-                       img_size:int=224,
+                       img_size:int=244,
                        load_chunks_seq_val:str=None,
                        load_chunks_seq_trn:str=None):
 

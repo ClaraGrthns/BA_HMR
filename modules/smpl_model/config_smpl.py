@@ -13,6 +13,7 @@ JOINT_REGRESSOR_H36M_correct = join(folder_path, 'data/J_regressor_h36m_correct.
 SMPL_Neutral = join(SMPL_path, 'basicmodel_neutral_lbs_10_207_0_v1.1.0.pkl')
 SMPL_Male = join(SMPL_path, 'basicmodel_m_lbs_10_207_0_v1.1.0.pkl')
 SMPL_Female = join(SMPL_path, 'basicmodel_f_lbs_10_207_0_v1.1.0.pkl')
+SMPL_sampling_matrix = join(folder_path, 'data/mesh_downsampling.npz')
 
 JOINTS_IDX = [8, 5, 29, 30, 4, 7, 21, 19, 17, 16, 18, 20, 31, 32, 33, 34, 35, 36, 37, 24, 26, 25, 28, 27]
 

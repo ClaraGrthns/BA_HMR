@@ -22,6 +22,8 @@ from torch.nn import functional as F
 def batch_rodrigues(axisang):
     # This function is borrowed from https://github.com/MandyMo/pytorch_HMR/blob/master/src/util.py#L37
     # axisang N x 3
+    # Returns: 
+    #   Rotation matrix corresponding to the quaternion -- size = [B, 9]
     axisang_norm = torch.norm(axisang + 1e-8, p=2, dim=1)
     angle = torch.unsqueeze(axisang_norm, -1)
     axisang_normalized = torch.div(axisang, angle)
@@ -30,7 +32,7 @@ def batch_rodrigues(axisang):
     v_sin = torch.sin(angle)
     quat = torch.cat([v_cos, v_sin * axisang_normalized], dim=1)
     rot_mat = quat2mat(quat)
-    rot_mat = rot_mat.view(rot_mat.shape[0], 9)
+    rot_mat = rot_mat.view(rot_mat.shape[0], 9) 
     return rot_mat
 
 

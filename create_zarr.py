@@ -17,7 +17,7 @@ if __name__ == '__main__':
         img_size = 224
     else:
         img_size = 256
-    '''
+    
     save_img_zarr(
         root_path=args.root_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_train.zarr'),
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     )
 
     print('train zarr is done!')
-    '''
+   
     save_img_zarr(
         root_path=args.root_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_valid.zarr'),

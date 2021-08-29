@@ -1,8 +1,7 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-import os.path as osp
-
+from .utils.data_utils import save_checkpoint
 from .smpl_model.smpl import SMPL, SMPL_MODEL_DIR, H36M_J17_NAME
 
 
@@ -66,8 +65,8 @@ def _loop(
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
-        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt}
+        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": (vertices_pred,)}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": (vertices_gt,)}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
@@ -96,7 +95,7 @@ def _loop(
                             iteration=(epoch * len(loader) + i),
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,)
-            min_mpve = running_metrics['VERTS']
+            min_mpve = running_metrics['VERTS']/((i%log_steps)+1)
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
@@ -211,14 +210,3 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
         
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
 
-def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs):
-    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
-    save_model = {
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'running_loss': loss,
-            'config_model': cfgs,
-            }
-    if name == 'latest_ckpt':
-        save_model['optimizer_state_dict'] = optimizer.state_dict()
-    torch.save(save_model, filepath)

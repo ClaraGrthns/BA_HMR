@@ -2,11 +2,6 @@ import torch
 import numpy as np
 from .utils.geometry import batch_rodrigues
 
-####
-# Weights for Losses:
-# cfg.
-####
-
 def criterion_smpl(param_pred, param_gt):
     betas_pred, poses_pred = param_pred
     betas_gt, poses_gt = param_gt
@@ -63,14 +58,21 @@ def mean_per_vertex_error(vert_pred, vert_gt):
         error = np.mean(torch.sqrt( ((vert_pred - vert_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy())
         return error 
     
-def get_metrics_dict():
-    return {"VERTS": mean_per_vertex_error,
-            "SMPL": criterion_smpl,}  
+def get_metrics_dict(metr_weights):
+    metr_dict = {"VERTS": mean_per_vertex_error,
+                "VERTS_FULL": mean_per_vertex_error,
+                "VERTS_SUB2": mean_per_vertex_error,
+                "VERTS_SUB": mean_per_vertex_error,
+                "SMPL": criterion_smpl,}  
+    return {key: metric for key, metric in metr_dict.items() if metr_weights[key] != 0 }
 
 
 def get_criterion_dict(loss_weights):
     loss_dict = {"SMPL" : criterion_smpl, 
                  "VERTS": criterion_verts,
+                 "VERTS_FULL": criterion_verts,
+                 "VERTS_SUB2": criterion_verts,
+                 "VERTS_SUB": criterion_verts,
                  "KP_2D": criterion_kp_2d,
                  "KP_3D": criterion_kp_3d,}
     # Maps keys to criteria functions and corresponding weights (only for loss_weights ≠ 0)

@@ -45,5 +45,5 @@ def save_img_zarr(root_path:str,
         seq_pose = sequences[seq_name]['poses2d'][person_id][index_seq]  
         pose2d =  torch.tensor(seq_pose, dtype=torch.float32)
         img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=pose2d, padding=padding)
-        img_tensor = transform(img_tensor,img_size)
+        img_tensor = transform(img_tensor, img_size)
         img_zarr[index] = img_tensor
