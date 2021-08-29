@@ -171,7 +171,6 @@ def get_chunks_img_paths_list_seq(data_path:str="../3DPW",
                     
     #create n chunks of length len_chunks for each sequence and each person: num_seq x num_chunks x len_chunks  
     chunks = [chunk for path_list in img_seqs_list for chunk in rand_partition(path_list, len(path_list)//len_chunks, len_chunks)]
-    print(len(chunks))
     return chunks, img_seqs_list, img_paths, seq_name_to_seq
 
 def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs, type='imgwise' ):

@@ -67,8 +67,9 @@ class PoseSeqNetXtreme(torch.nn.Module):
         
     def forward(self, images):
         batch_size = images.shape[0]
+        img_size = images.shape[-2:]
         seq_len = images.shape[1]
-        images = images.view(batch_size*seq_len, 3,244,244)
+        images = images.view(batch_size*seq_len, 3,img_size[0],img_size[1])
         features = torch.nn.functional.relu(self.encoder(images)).view(batch_size, seq_len, -1) 
         betas = self.linear_shape(features) 
         poses = self.linear_pose(features)

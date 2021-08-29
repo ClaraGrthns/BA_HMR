@@ -68,7 +68,7 @@ def to_tensor(img):
 
 
 
-def transform(img, img_size=244):
+def transform(img, img_size=224):
     trans = transforms.Compose([  
                         SquarePad_tensor(),         
                         transforms.Resize(img_size),

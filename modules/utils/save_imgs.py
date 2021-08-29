@@ -27,7 +27,7 @@ def save_img_zarr(root_path:str,
     person_ids = id_img_list['person_ids']
     sequences = id_img_list['sequences']
 
-    ## create imgsx3x244x244 zarr array
+    ## create imgsx3xHxW zarr array
     if num_chunks is None:
         num_chunks= len(image_paths)//10                 
     img_zarr = zarr.open(zarr_path, mode='w', shape=(len(image_paths), 3, img_size, img_size), chunks=(num_chunks, None), dtype='float32')

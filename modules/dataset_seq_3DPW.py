@@ -21,7 +21,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         store_sequences=True,
         store_images=True,
         load_from_zarr:str=None,
-        img_size=244,
+        img_size=224,
         load_chunks_seq=None,
     ):
         super(SequenceWise3DPW, self).__init__()
@@ -134,7 +134,7 @@ def get_train_val_data(data_path:str,
                        store_images:bool=True,
                        load_from_zarr_trn:str=None,
                        load_from_zarr_val:str=None,
-                       img_size:int=244,
+                       img_size:int=224,
                        load_chunks_seq_val:str=None,
                        load_chunks_seq_trn:str=None):
 

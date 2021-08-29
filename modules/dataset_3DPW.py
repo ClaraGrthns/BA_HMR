@@ -82,7 +82,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
         t_load_sequence = time.time()
     
-        # Resize Image to img_sizeximg_size format with padding (resnet: 224x224, hrnet: 256x256)
+        # Resize Image to img_sizeximg_size format with padding (hrnet: 256x256)
         if self.load_from_zarr is not None:
             img_tensor = self.imgs[index] ### Read array from memory
         elif self.store_images and self.img_cache_indicator[index]:
