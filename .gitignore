@@ -1,6 +1,8 @@
 *logging
 **/__pycache__
 *.pyc
+*.npz
+*.json
 */modules/__pycache__/models.cpython-39.pyc
 *.ipynb_checkpoints
 **/.vscode
