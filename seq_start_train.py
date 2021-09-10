@@ -8,7 +8,7 @@ from modules.models import get_model_seq
 from modules.seq_training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
 from modules.dataset_seq_3DPW import get_train_val_data
-from modules.utils.data_utils import mk_dir_checkpoint
+from modules.utils.data_utils_3dpw import mk_dir_checkpoint
 from configs.config import update_cfg
 from hrnet_model_imgnet.config.default import update_hrnet_cfg
 

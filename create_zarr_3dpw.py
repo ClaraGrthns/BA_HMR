@@ -1,6 +1,6 @@
 import os.path as osp
 import argparse
-from modules.utils.save_imgs import save_img_zarr
+from modules.utils.save_imgs import save_img_zarr_3dpw
 
 
 if __name__ == '__main__':
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     else:
         img_size = 256
     
-    save_img_zarr(
+    save_img_zarr_3dpw(
         root_path=args.root_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_train.zarr'),
         num_required_keypoints=args.num_required_keypoints,
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     print('train zarr is done!')
    
-    save_img_zarr(
+    save_img_zarr_3dpw(
         root_path=args.root_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_valid.zarr'),
         num_required_keypoints=args.num_required_keypoints,

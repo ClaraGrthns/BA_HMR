@@ -8,7 +8,7 @@ import torch
 import zarr
 
 from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from .utils.data_utils import get_chunks_img_paths_list_seq
+from .utils.data_utils_3dpw import get_chunks_img_paths_list_seq
 
 
 class SequenceWise3DPW(torch.utils.data.Dataset):

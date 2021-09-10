@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-from .utils.data_utils import save_checkpoint
+from .utils.data_utils_3dpw import save_checkpoint
 from .smpl_model.smpl import SMPL, SMPL_MODEL_DIR, H36M_J17_NAME
 
 

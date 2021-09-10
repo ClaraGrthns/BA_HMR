@@ -4,8 +4,8 @@ from torchvision import transforms
 import torch
 from matplotlib import pyplot as plt
 
-from .data_utils import get_relevant_keypoints
-#from .render import Renderer
+from .data_utils_3dpw import get_relevant_keypoints
+from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
 from ..smpl_model.smpl import SMPL, SMPL_MODEL_DIR, get_smpl_faces
 

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import os.path as osp
-from .utils.data_utils import save_checkpoint
+from .utils.data_utils_3dpw import save_checkpoint
 from .smpl_model._smpl import SMPL, Mesh, H36M_J17_NAME
         
 def _loop(
@@ -19,9 +19,6 @@ def _loop(
     writer,
     log_steps,
     device,
-    checkpoint_dir=None,
-    cfgs=None,
-    min_mpve=None,
 ):
     
     if train:
@@ -90,17 +87,6 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-       
-        if name == "validate" and running_metrics['VERTS_FULL'] < min_mpve:
-            save_checkpoint(model=model, 
-                            optimizer=optimizer,
-                            loss=sum(running_loss.values())/((i%log_steps)+1),
-                            name='min_mpve', 
-                            epoch=epoch,
-                            iteration=(epoch * len(loader) + i),
-                            checkpoint_dir=checkpoint_dir,
-                            cfgs=cfgs,)
-            min_mpve = running_metrics['VERTS_FULL']/((i%log_steps)+1)
     
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
@@ -116,7 +102,7 @@ def _loop(
                                  running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
-    return sum(epoch_loss.values())/len(loader), min_mpve
+    return sum(epoch_loss.values())/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device,):
     return _loop(
@@ -135,7 +121,7 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
         device=device,
     )
     
-def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device, checkpoint_dir, cfgs, min_mpve):
+def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -151,9 +137,6 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
             writer=writer,
             log_steps = log_steps, 
             device=device,
-            checkpoint_dir=checkpoint_dir,
-            cfgs=cfgs,
-            min_mpve=min_mpve,
         )
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
@@ -189,7 +172,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     min_mpve = float('inf') 
 
     for epoch in range(num_epochs):
-        loss_trn, _ = trn_loop(model=model, 
+        loss_trn = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 
                             criterion=criterion, 
@@ -210,7 +193,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                         checkpoint_dir=checkpoint_dir,
                         cfgs=cfgs,)
 
-        loss_val, min_mpve = val_loop(model=model, 
+        loss_val = val_loop(model=model, 
                             loader_val=loader_val,
                             criterion=criterion, 
                             metrics=metrics,
@@ -220,8 +203,16 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps, 
                             device=device,
+                            )
+        if loss_val < min_mpve:
+            save_checkpoint(model=model, 
+                            optimizer=optimizer,
+                            loss=loss_val,
+                            name='min_valloss', 
+                            epoch=epoch,
+                            iteration=(epoch+1)*len(loader_trn),
                             checkpoint_dir=checkpoint_dir,
-                            cfgs=cfgs,
-                            min_mpve=min_mpve,)
+                            cfgs=cfgs,)
+
         
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')

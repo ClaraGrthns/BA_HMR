@@ -55,7 +55,7 @@ def mean_per_vertex_error(vert_pred, vert_gt):
     Compute mPVE
     """
     with torch.no_grad():
-        error = np.mean(torch.sqrt( ((vert_pred - vert_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy())
+        error = np.mean(torch.sqrt(((vert_pred - vert_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy())
         return error 
     
 def get_metrics_dict(metr_weights):

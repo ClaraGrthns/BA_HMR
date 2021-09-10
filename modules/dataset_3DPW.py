@@ -8,7 +8,7 @@ import torch
 import zarr
 
 from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from .utils.data_utils import get_ids_imgspaths_seq 
+from .utils.data_utils_3dpw import get_ids_imgspaths_seq 
 
 
 class ImageWise3DPW(torch.utils.data.Dataset):

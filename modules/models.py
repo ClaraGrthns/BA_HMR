@@ -88,8 +88,6 @@ class PoseSeqDecoder(torch.nn.Module):
         verts_sub2 = self.upsampling1(z) 
         verts_sub = self.upsampling2(verts_sub2) 
         verts_full = self.upsampling3(verts_sub)
-        verts_sub2 = verts_sub2
-        verts_sub = verts_sub
         return verts_sub2, verts_sub, verts_full
 
 def get_model_seq(dim_z_pose, dim_z_shape, encoder, cfg_hrnet):
