@@ -5,7 +5,7 @@ from modules.utils.save_imgs import save_img_zarr_3dpw
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Save training and validation imgs as zarr")
-    parser.add_argument('--root_path', type=str, help='path to dataset 3DPW', default='/home/grotehans/3DPW')
+    parser.add_argument('--data_path', type=str, help='path to dataset 3DPW', default='/home/grotehans/3DPW')
     parser.add_argument('--out_dir', type=str, help='path to directory of zarr', default='/home/grotehans/BA_HMR/data')
     parser.add_argument('--num_required_keypoints', type=int, help='minimum number of required keypoints', default=8)
     parser.add_argument('--encoder', type=str, help='Encoder Options: resnet or hrnet', default='resnet')
@@ -19,7 +19,7 @@ if __name__ == '__main__':
         img_size = 256
     
     save_img_zarr_3dpw(
-        root_path=args.root_path,
+        data_path=args.data_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_train.zarr'),
         num_required_keypoints=args.num_required_keypoints,
         split='train',
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     print('train zarr is done!')
    
     save_img_zarr_3dpw(
-        root_path=args.root_path,
+        data_path=args.data_path,
         zarr_path=osp.join(args.out_dir, f'imgs_3dpw_{args.encoder}_{args.padding}_padding_valid.zarr'),
         num_required_keypoints=args.num_required_keypoints,
         split='validation',

@@ -17,8 +17,47 @@
 import torch
 import numpy as np
 from torch.nn import functional as F
+import transforms3d
 
+def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
+        # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
+        pose = pose.view(-1, 3)
+        beta = beta.view(1, -1)
+        # translation vector from smpl coordinate to h36m world coordinate
+        trans = np.array(trans, dtype=np.float32).reshape(3)
+        # camera rotation and translation
+        R = np.array(cam_pose[:3, :3], dtype=np.float32).reshape(3, 3)
+        t = np.array(cam_pose[0:3,3], dtype=np.float32).reshape(3)
 
+        # change to mean shape if beta is too far from it
+        beta[(beta.abs() > 3).any(dim=1)] = 0.
+
+        # transform world coordinate to camera coordinate
+        root_pose = pose[root_idx, :].numpy()
+        angle = np.linalg.norm(root_pose)
+        root_pose = transforms3d.axangles.axangle2mat(root_pose / angle, angle)
+        root_pose = np.dot(R, root_pose)
+        axis, angle = transforms3d.axangles.mat2axangle(root_pose)
+        root_pose = axis * angle
+        pose[root_idx] = torch.from_numpy(root_pose)
+        pose = pose.view(1, -1)
+        # get mesh and joint coordinates
+        smpl_mesh_coord, smpl_joint_coord = smpl(pose, beta)
+
+        # incorporate face keypoints
+        smpl_mesh_coord = smpl_mesh_coord.numpy().astype(np.float32).reshape(-1, 3)
+        smpl_joint_coord = smpl_joint_coord.numpy().astype(np.float32).reshape(-1, 3)
+        # compenstate rotation (translation from origin to root joint was not cancled)
+        smpl_trans = np.array(trans, dtype=np.float32).reshape(3)  # translation vector from smpl coordinate to h36m world coordinate
+        smpl_trans = np.dot(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
+        root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
+        smpl_trans = smpl_trans - root_joint_coord + np.dot(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
+        
+        # translation
+        #smpl_mesh_coord += smpl_trans
+        smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord)
+        return smpl_mesh_coord, smpl_trans
+    
 def batch_rodrigues(axisang):
     # This function is borrowed from https://github.com/MandyMo/pytorch_HMR/blob/master/src/util.py#L37
     # axisang N x 3

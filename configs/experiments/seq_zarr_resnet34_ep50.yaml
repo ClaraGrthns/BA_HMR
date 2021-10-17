@@ -1,9 +1,13 @@
 LOGGING:
     LOGDIR: "./logging/seq_zarr_resnet34_ep50/"  
-STORE_IMAGES: True
-LOAD_FROM_ZARR: 
-    TRN: "./data/imgs_3dpw_train.zarr" 
-    VAL: "./data/imgs_3dpw_valid.zarr" 
+THREEDPW:
+    STORE_IMAGES: True
+    LOAD_FROM_ZARR: 
+        TRN: "../3DPW/img_zarr/imgs_3dpw_train.zarr" 
+        VAL: "../3DPW/img_zarr/imgs_3dpw_valid.zarr" 
+    LOAD_CHUNKS_SEQ:
+        TRN: '../3DPW/data_pickle/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle'
+        VAL: '../3DPW/data_pickle/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle'
 TRAIN:
     NUM_EPOCHS: 50
     LEN_CHUNKS: 8 
@@ -11,9 +15,6 @@ TRAIN:
     BATCH_SIZE_VAL: 8
 MODEL: 
     ENCODER: 'resnet34'
-LOAD_CHUNKS_SEQ:
-    TRN: 'data/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle'
-    VAL: 'data/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle'
 LOSS: 
     SMPL: 0.
     VERTS: 0.

@@ -26,7 +26,7 @@ def get_relevant_keypoints(keypoints, threshold=0.3):
     return [(x,y) for (x,y,relevance) in (keypoints).transpose(1,0) if relevance>threshold]
 
 
-def get_ids_imgspaths_seq(root_path:str="../3DPW",
+def get_ids_imgspaths_seq(data_path:str="../3DPW",
                           out_dir:str="./data/ids_imgpaths",
                           split:str='train',
                           num_required_keypoints:int=8,
@@ -40,7 +40,7 @@ def get_ids_imgspaths_seq(root_path:str="../3DPW",
     If the path to a pickle file is specified, the dictionary is loaded from the pickle file. 
     The dictionary can be saved as a pickle file.
         Args: 
-           root_path:
+           data_path:
                Path to dataset directory 
            out_dir: 
                Saves directory as pickle for given filepath if 'store_as_pkl' is True
@@ -59,14 +59,14 @@ def get_ids_imgspaths_seq(root_path:str="../3DPW",
         with open(load_from_pkl , "rb") as fp:
             ids_imgpaths_seq = pkl.load(fp)
     else: 
-        sequence_path = osp.join(root_path, 'sequenceFiles', split)
+        sequence_path = osp.join(data_path, 'sequenceFiles', split)
         seq_names = [seq_name.split('.pkl')[0] for seq_name in sorted(os.listdir(sequence_path))]
         image_paths = []
         person_ids = []
         seq_name_to_seq = {}
         for seq_name in seq_names:
             ## loop through all sequences and filter out those where kps are missing
-            img_dir = osp.join(root_path, 'imageFiles', seq_name)
+            img_dir = osp.join(data_path, 'imageFiles', seq_name)
             seq_file_name = os.path.join(sequence_path, f'{seq_name}.pkl')
             with open(seq_file_name, 'rb') as f:
                 seq = pkl.load(f, encoding='latin1')

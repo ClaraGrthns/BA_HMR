@@ -5,12 +5,11 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 
 from modules.models import get_model
-from modules.training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
-from modules.dataset_3DPW import get_train_val_data
+from modules.datasets.dataset_3DPW import get_train_val_data
 from configs.config import update_cfg
 from hrnet_model_imgnet.config.default import update_hrnet_cfg
-from modules.training import val_loop
+from modules.train.training import val_loop
 
 def parse_args():
 

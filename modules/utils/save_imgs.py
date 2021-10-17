@@ -11,7 +11,7 @@ from .image_utils import to_tensor, transform, transform_visualize, crop_box
 from .data_utils_3dpw import get_ids_imgspaths_seq
 from .data_utils_h36m import get_data_list_h36m
 
-def save_img_zarr_3dpw(root_path:str,
+def save_img_zarr_3dpw(data_path:str,
                   zarr_path:str,
                   split:str='train',
                   num_required_keypoints:int=0,
@@ -19,7 +19,7 @@ def save_img_zarr_3dpw(root_path:str,
                   img_size=224,
                   load_from_pkl=None,
                   padding=False,):  
-    id_img_list = get_ids_imgspaths_seq(root_path=root_path, 
+    id_img_list = get_ids_imgspaths_seq(data_path=data_path, 
                                     split=split,
                                     num_required_keypoints=num_required_keypoints,
                                     load_from_pkl=load_from_pkl,

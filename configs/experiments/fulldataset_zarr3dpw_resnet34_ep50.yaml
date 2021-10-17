@@ -1,0 +1,11 @@
+LOGGING:
+    LOGDIR: "logging/fulldataset_zarr3dpw_resnet34_ep50/"  
+TRAIN:
+    NUM_EPOCHS: 50
+MODEL: 
+    ENCODER: 'resnet34'
+THREEDPW:
+    STORE_IMAGES: False
+    LOAD_FROM_ZARR: 
+        TRN: "../3DPW/img_zarr/imgs_3dpw_train.zarr" 
+        VAL: "../3DPW/img_zarr/imgs_3dpw_valid.zarr" 

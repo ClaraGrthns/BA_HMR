@@ -26,9 +26,6 @@ if __name__ == '__main__':
 
     # Forward from the SMPL layer
     verts, Jtr = smpl_layer(pose_params, th_betas=shape_params)
-
-    print(verts.shape)
-    print(Jtr.shape)
     # Draw output vertices and joints
     display_model(
         {'verts': verts.cpu().detach(),

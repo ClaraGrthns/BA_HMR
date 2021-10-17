@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from .data_utils_3dpw import get_relevant_keypoints
 from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
-from ..smpl_model.smpl import SMPL, SMPL_MODEL_DIR, get_smpl_faces
+import cv2
 
 
 # https://discuss.pytorch.org/t/how-to-resize-and-pad-in-a-torchvision-transforms-compose/71850/4
@@ -80,9 +80,9 @@ def transform(img, img_size=224):
 
 def transform_visualize(img, img_size=224):
     trans = transforms.Compose([  
-                        SquarePad_tensor(), 
-                        transforms.CenterCrop(img_size),
+                        SquarePad_tensor(),
                         transforms.Resize(img_size),
+                        transforms.CenterCrop(img_size),
                         ])
     return trans(img)
 
@@ -95,37 +95,23 @@ def plot_tensor(img_tensor):
     
 # INPUT: betas: torch.Tensor([1, 10]), poses: torch.Tensor([1,72]), trans: torch.Tensor([1,3])
 # cam_pose: torch.Tensor([4,4]), cam_intr: torch.Tensor([3, 3])
-def visualize_mesh(img, cam_pose, cam_intr, beta, pose, trans=None, vertices=None):
+def visualize_mesh(img, cam_intr, smpl, beta=None, pose=None, trans=None, vertices=None):
     cam_intr = cam_intr.detach().numpy()
-
     if isinstance(img, torch.Tensor):
         img = img.cpu().numpy().transpose(1,2,0)
-   
 
- ## get smpl faces and vertices ##
-
-    #SMPLX Model: 
-    if vertices is None:   
-        smpl = SMPL(SMPL_MODEL_DIR)
-        body_pose = pose[:,3:]
-        global_orient = pose[:,:3]
-        out = smpl(beta, body_pose, global_orient, trans) ## SMPLX with translation
-        vertices = out.vertices
+    ## get smpl faces and vertices ##
+    faces = smpl.faces.cpu().numpy()
+    if vertices is None:
+        vertices = smpl(pose=pose, beta=beta) + trans
     vertices = vertices[0].detach().numpy()
-    faces = get_smpl_faces()
-    
-    # _SMPL from METRO:
-    #smpl = SMPL()
-    #vertices = smpl(pose = pose, beta = beta[:10]) + trans
-    #faces = smpl.faces.cpu().numpy()
-    
-    # camera: rotation matrix, t, f and center
-    cam_rot = rotation_matrix_to_angle_axis(cam_pose[None, :3, :3]).detach().numpy().ravel() 
-    cam_t = cam_pose[0:3,3]
+    ## camera: rotation matrix, t, f and center
+        #cam_rot = rotation_matrix_to_angle_axis(cam_pose[None, :3, :3]).detach().numpy().ravel()
+    cam_rot = rotation_matrix_to_angle_axis(torch.eye(3)[None]).detach().numpy().ravel() 
+    cam_t = np.zeros(3) #cam_pose[0:3,3]
     cam_f = np.array([cam_intr[0,0],cam_intr[1,1]])
     cam_center = cam_intr[0:2,2]
-
-    # Visualize Mesh 
+    ## Visualize Mesh 
     renderer = Renderer(faces=faces)
     color= 'pink'
     focal_length = 1000
@@ -138,9 +124,13 @@ def visualize_mesh(img, cam_pose, cam_intr, beta, pose, trans=None, vertices=Non
                                use_bg = True,
                                focal_length = focal_length,
                                body_color = color)
-
     #return torch.Tensor
     rend_img = rend_img.transpose(2,0,1)
     rend_img = torch.from_numpy(rend_img.copy())
     return rend_img
 
+def lcc(mask):
+    num_labels, labels_im = cv2.connectedComponents(np.byte(mask), connectivity=4)
+    labels = np.eye(num_labels)[labels_im][:,:,1:]
+    arg = labels.sum(axis=0).sum(axis=0).argmax()
+    return labels[:,:,arg]

@@ -41,9 +41,6 @@ class Renderer(object):
             height, width = img.shape[:2]
         else:
             height, width = self.height, self.width
-            
-        print(height, width)
-
         if faces is None:
             faces = self.faces
 
@@ -81,7 +78,6 @@ class Renderer(object):
 
 
         num_verts = self.renderer.v.shape[0]
-        print(num_verts) 
         albedo = self.renderer.vc
         # Construct Back Light (on back right corner)
         yrot = np.radians(120)
