@@ -4,7 +4,7 @@ LOGGING:
 OUT_DIR: './checkpoints/'
 DATASETS: 
     THREEDPW: '../3DPW'
-    H36M: '../H36M'
+    H36M: '/home/grotehans/H36M'
 THREEDPW:
     STORE_SEQUENCES: True
     STORE_IMAGES: True
@@ -12,15 +12,15 @@ THREEDPW:
         TRN: None
         VAL: None
     LOAD_IDS_IMGPATHS_SEQ: 
-        TRN: "../3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle"
-        VAL: "../3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle"
+        TRN: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle"
+        VAL: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle"
 H36M: 
     LOAD_FROM_ZARR: 
         TRN: 
         VAL: 
     LOAD_DATALIST:
-            TRN: '../H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
-            VAL: '../H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
+            TRN: '/home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
+            VAL: '/home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
     MASK: True
     VAL_ON_H36M: False
         

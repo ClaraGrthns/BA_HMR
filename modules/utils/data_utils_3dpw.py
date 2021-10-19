@@ -8,7 +8,7 @@ import random
 
 #Source: https://stackoverflow.com/questions/3352737/how-to-randomly-partition-a-list-into-n-nearly-equal-parts
  
-def rand_partition (list_in, n, len_chunks):
+def rand_partition(list_in, n, len_chunks):
     ''' Devides List into n random sublists 
     Args: 
         list_in: List that will be devides

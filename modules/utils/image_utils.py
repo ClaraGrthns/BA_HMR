@@ -5,7 +5,7 @@ import torch
 from matplotlib import pyplot as plt
 
 from .data_utils_3dpw import get_relevant_keypoints
-from .render import Renderer
+#from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
 import cv2
 

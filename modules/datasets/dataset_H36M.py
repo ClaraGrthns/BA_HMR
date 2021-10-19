@@ -62,8 +62,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         return len(self.datalist)
 
     def __getitem__(self, index):
-        data = copy.deepcopy(self.datalist[index])
-        img_path = osp.join(self.img_dir, data['img_name'])
+        item = copy.deepcopy(self.datalist[index])
+        img_path = osp.join(self.img_dir, item['img_name'])
         img = np.array(Image.open(img_path))            
         if self.load_from_zarr is not None:
             img_tensor = self.imgs[index]
@@ -72,28 +72,33 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         else:
             img = np.array(Image.open(img_path))
             if self.mask:
-                sub_dir, img_name = osp.split(data['img_name'])
+                sub_dir, img_name = osp.split(item['img_name'])
                 mask_name = img_name.split('.')[-2]+'_mask.jpg'
                 mask_path = osp.join(self.img_dir, sub_dir, mask_name)
                 mask = np.round(np.array(Image.open(mask_path))/255-1)
                 ## Cut out mask and use different backgrounds
                 img[np.nonzero(mask)] = self.get_background(img.shape)[np.nonzero(mask)]
-            x_min, y_min, x_max, y_max = data['bbox']
+            x_min, y_min, x_max, y_max = item['bbox']
             img = img[y_min:y_max, x_min:x_max]
             img_tensor = to_tensor(img)
             img_tensor = transform(img_tensor, img_size=self.img_size)
             if self.store_images:
                 self.img_cache[index] = img_tensor
                 self.img_cache_indicator[index] = True
-        beta = data['betas']
-        pose = data['poses']
-        trans = data['trans']
-        cam_pose = data['cam_pose'] 
-        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
-        data['vertices'] = vertices
-        data['trans'] = trans
+        data = {}
         data['img_path'] = img_path
         data['img'] = img_tensor
+        data['cam_pose'] = item['cam_pose']
+        data['cam_intr'] = item['cam_intr']
+ 
+        beta = item['betas']
+        pose = item['poses']
+        trans = item['trans']
+        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        data['betas'] = beta
+        data['poses'] = pose
+        data['trans'] = trans
+        data['vertices'] = vertices
         return data
     def get_background(self, img_shape):
         height, width,_ = img_shape
