@@ -42,8 +42,9 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 mkdir /scratch/$SLURM_JOB_ID/H36M
-cp -R /home/grotehans/H36M/images.zip /scratch/$SLURM_JOB_ID/H36M
-unzip /scratch/$SLURM_JOB_ID/H36M/images.zip
+cp -R /home/grotehans/H36M/all_images.zip /scratch/$SLURM_JOB_ID/H36M
+unzip /scratch/$SLURM_JOB_ID/H36M/all_images.zip
+mv /scratch/$SLURM_JOB_ID/H36M/all_images /scratch/$SLURM_JOB_ID/H36M/images
 cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/H36M
 
 cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/

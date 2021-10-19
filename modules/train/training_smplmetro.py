@@ -34,7 +34,7 @@ def _loop(
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
-        img = batch["img"].to(device)
+        img = batch["img"]
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         trans_gt = batch["trans"].to(device)

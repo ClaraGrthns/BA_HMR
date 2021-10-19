@@ -55,6 +55,7 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         
         # translation
         #smpl_mesh_coord += smpl_trans
+        smpl_trans = torch.FloatTensor(smpl_trans)
         smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord)
         return smpl_mesh_coord, smpl_trans
     

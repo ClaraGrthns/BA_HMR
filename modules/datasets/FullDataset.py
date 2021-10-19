@@ -42,7 +42,8 @@ def get_full_train_val_data(
         mask:bool=True,
         val_on_h36m:bool=False,
     ): 
-    smpl = SMPL()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    smpl = SMPL().to(torch.device(device))
     smpl.layer['neutral'].th_shapedirs= smpl.layer['neutral'].th_shapedirs[:,:,:10]
     smpl.layer['neutral'].th_betas= smpl.layer['neutral'].th_betas[:,:10]
 
