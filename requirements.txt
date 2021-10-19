@@ -13,3 +13,4 @@ yacs==0.1.8
 scipy==1.7
 chumpy==0.7
 yacs==0.1.8
+transforms3d

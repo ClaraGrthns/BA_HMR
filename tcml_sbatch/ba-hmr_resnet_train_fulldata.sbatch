@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=20:00:00
+#SBATCH --time=24:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -42,15 +42,18 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 mkdir /scratch/$SLURM_JOB_ID/H36M
-cp -R /home/grotehans/H36M/images.zip /scratch/$SLURM_JOB_ID/H36M
+cp -R /home/grotehans/H36M/images.zip /scratch/$SLURM_JOB_ID/H36M/
+echo STEP1!
 unzip /scratch/$SLURM_JOB_ID/H36M/images.zip
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/H36M
-
+cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/H36M/
+echo STEP2!
 cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
+echo STEP3!
 
 ls /scratch/$SLURM_JOB_ID/
+ls /scratch/$SLURM_JOB_ID/H36M/
 ####
 #c) Execute your tensorflow code in a specific singularity container
 #d) Write your checkpoints to your home directory, so that you still have them if your job fails
