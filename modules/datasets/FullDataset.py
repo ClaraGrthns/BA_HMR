@@ -3,7 +3,7 @@ import numpy as np
 
 from .dataset_3DPW import get_data as get_data_3dpw
 from .dataset_H36M import get_data as get_data_h36m
-from modules.smpl_model.smpl_pose2mesh import SMPL
+from ..smpl_model.smpl_pose2mesh import SMPL
 
 class ImgWiseFullDataset(torch.utils.data.Dataset):
     """Combination of Human 3.6M and 3DPW Dataset"""

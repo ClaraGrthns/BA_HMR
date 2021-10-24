@@ -42,7 +42,8 @@ def main(cfg, cfg_hrnet):
                                               load_ids_imgpaths_seq_val=cfg.THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL,
                                              )
     print("length train and val data:", len(train_data), len(val_data))
-    model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet).to(device)
     
     dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     writer.add_graph(model, dummy_input)
