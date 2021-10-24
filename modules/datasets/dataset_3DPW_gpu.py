@@ -49,8 +49,8 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
         elif self.store_images:
             self.img_size = img_size
-            self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool).to(self.device)
-            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32).to(self.device)
+            self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
+            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
         self.timers = {
             'load_sequence': 0,
             'load_image': 0,
@@ -87,14 +87,14 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         if self.load_from_zarr is not None:
             img_tensor = self.imgs[index].to(self.device) ### Read array from memory
         elif self.store_images and self.img_cache_indicator[index]:
-            img_tensor = self.img_cache[index]
+            img_tensor = self.img_cache[index].to(self.device)
         else:
             img = np.array(Image.open(img_path))
             img_tensor = to_tensor(img).to(self.device)
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
             img_tensor = transform(img_tensor, img_size=self.img_size)
             if self.store_images:
-                self.img_cache[index] = img_tensor
+                self.img_cache[index] = img_tensor.to('cpu')
                 self.img_cache_indicator[index] = True
                 
         t_load_image = time.time()

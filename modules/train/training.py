@@ -1,8 +1,9 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-from ..utils.data_utils_3dpw import save_checkpoint
-from ..smpl_model.smpl import SMPL, H36M_J17_NAME
+import os.path as osp
+
+from ..smpl_model._smpl import SMPL, H36M_J17_NAME
 
 
 
@@ -18,9 +19,6 @@ def _loop(
     writer,
     log_steps,
     device,
-    checkpoint_dir=None,
-    cfgs=None,
-    min_mpve=None,
 ):
     
     if train:
@@ -29,8 +27,9 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
-    epoch_loss = dict.fromkeys(criterion.keys(), 0)
+    epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
+    epoch_mvpe = 0
     smpl = SMPL().to(device)    
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
@@ -39,9 +38,7 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         trans_gt = batch["trans"].to(device)
-        #poses2d = batch["poses2d"].to(device)
-        #poses3d = batch["poses3d"].to(device)
-        
+        vertices_gt = batch['vertices'].to(device)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -50,9 +47,8 @@ def _loop(
         prediction = model(img)
    
         # Calculate Vertices with SMPL-model
-        betas_pred, poses_pred = prediction        
-        vertices_gt = smpl(betas_gt, poses_gt[:, 3:], poses_gt[:, :3], trans_gt)
-        vertices_pred = smpl(betas_pred, poses_pred[:, 3:], poses_pred[:, :3], trans_gt)
+        betas_pred, poses_pred = prediction  
+        vertices_pred = smpl(beta=betas_pred, pose=poses_pred, transl=trans_gt)
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_gt = smpl.get_h36m_joints(vertices_gt)
@@ -63,8 +59,8 @@ def _loop(
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
-        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": (vertices_pred,)}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": (vertices_gt,)}
+        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
@@ -72,7 +68,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
-            epoch_loss[loss_key] += loss.item()
+            epoch_loss += loss_batch.item()
         
         if train:
             # backward
@@ -83,18 +79,8 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-       
-        if name == "validate" and running_metrics['VERTS'] < min_mpve:
-            save_checkpoint(model=model, 
-                            optimizer=optimizer,
-                            loss=sum(running_loss.values())/((i%log_steps)+1),
-                            name='min_mpve', 
-                            epoch=epoch,
-                            iteration=(epoch * len(loader) + i),
-                            checkpoint_dir=checkpoint_dir,
-                            cfgs=cfgs,)
-            min_mpve = running_metrics['VERTS']/((i%log_steps)+1)
-    
+        epoch_mvpe += metrics['VERTS'](preds['VERTS'], targets['VERTS']) 
+
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
                 # ...log the metrics
@@ -109,7 +95,7 @@ def _loop(
                                  running_metrics[metr_key]/log_steps,
                                  epoch * len(loader) + i)
                 running_metrics[metr_key] = 0
-    return sum(epoch_loss.values())/len(loader), min_mpve
+    return epoch_loss/len(loader), epoch_mvpe/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -126,7 +112,7 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
         device=device,
     )
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, checkpoint_dir, cfgs, min_mpve):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -140,9 +126,6 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
             writer=writer,
             log_steps = log_steps, 
             device=device,
-            checkpoint_dir=checkpoint_dir,
-            cfgs=cfgs,
-            min_mpve=min_mpve,
         )
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
@@ -175,7 +158,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     min_mpve = float('inf') 
 
     for epoch in range(num_epochs):
-        loss_trn, _ = trn_loop(model=model, 
+        loss_trn,_ = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 
                             criterion=criterion, 
@@ -183,7 +166,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             epoch=epoch, 
                             writer=writer, 
                             log_steps=log_steps,
-                            device=device)
+                            device=device,
+                            )
 
         save_checkpoint(model=model, 
                         optimizer=optimizer,
@@ -192,9 +176,10 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                         epoch=epoch,
                         iteration=(epoch+1)*len(loader_trn),
                         checkpoint_dir=checkpoint_dir,
-                        cfgs=cfgs,)
+                        cfgs=cfgs,
+                        )
 
-        loss_val, min_mpve = val_loop(model=model, 
+        loss_val, mvpe = val_loop(model=model, 
                             loader_val=loader_val,
                             criterion=criterion, 
                             metrics=metrics, 
@@ -202,9 +187,30 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps, 
                             device=device,
+                            )
+        
+        if mvpe < min_mpve:
+            min_mpve = mvpe
+            save_checkpoint(model=model, 
+                            optimizer=optimizer,
+                            loss= loss_val,
+                            name='min_val_loss', 
+                            epoch=epoch,
+                            iteration=(epoch+1)*len(loader_val),
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,
-                            min_mpve=min_mpve,)
+                            )  
         
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
 
+def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs):
+    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
+    save_model = {
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'running_loss': loss,
+            'config_model': cfgs,
+            }
+    if name == 'latest_ckpt':
+        save_model['optimizer_state_dict'] = optimizer.state_dict()
+    torch.save(save_model, filepath)

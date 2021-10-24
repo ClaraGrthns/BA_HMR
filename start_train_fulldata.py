@@ -6,7 +6,7 @@ import os.path as osp
 
 
 from modules.models import get_model
-from modules.train.training_smplmetro import train_model
+from modules.train.training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
 from modules.datasets.FullDataset import get_full_train_val_data
 from modules.utils.data_utils_h36m import get_backgrounds_from_folder
@@ -43,7 +43,7 @@ def main(cfg, cfg_hrnet, dataset_opt):
         data_path_3dpw= cfg.DATASETS.THREEDPW,
         num_required_keypoints = cfg.TRAIN.NUM_REQUIRED_KPS,
         store_sequences=cfg.THREEDPW.STORE_SEQUENCES,
-        store_images=cfg.THREEDPW.STORE_IMAGES,
+        store_images_3dpw=cfg.THREEDPW.STORE_IMAGES,
         load_from_zarr_3dpw_trn=cfg.THREEDPW.LOAD_FROM_ZARR.TRN,
         load_from_zarr_3dpw_val=cfg.THREEDPW.LOAD_FROM_ZARR.VAL,
         img_size=cfg.IMG_SIZE,
@@ -56,6 +56,7 @@ def main(cfg, cfg_hrnet, dataset_opt):
         load_datalist_val=cfg.H36M.LOAD_DATALIST.VAL,
         backgrounds=backgrounds,
         mask=cfg.H36M.MASK,
+        store_images_h36m=cfg.H36M.STORE_IMAGES,
         val_on_h36m=cfg.H36M.VAL_ON_H36M,
     )
 
