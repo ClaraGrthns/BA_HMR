@@ -113,7 +113,8 @@ def get_data(data_path,
             img_size,
             mask,
             smpl,
-            backgrounds
+            backgrounds,
+            store_images,
             ):
     return ImageWiseH36M(data_path=data_path,
                         split=split,
@@ -122,5 +123,6 @@ def get_data(data_path,
                         img_size=img_size,
                         mask=mask,
                         smpl=smpl,
-                        backgrounds=backgrounds
+                        backgrounds=backgrounds,
+                        store_images=store_images
                         )

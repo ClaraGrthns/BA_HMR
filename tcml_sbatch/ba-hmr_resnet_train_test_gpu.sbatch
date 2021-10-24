@@ -9,7 +9,7 @@
 #resources:
 
 #SBATCH --cpus-per-task=12
-# the job can use and see 12 CPUs (from max 24).
+# the job can use and see 4 CPUs (from max 24).
 
 #SBATCH --partition=test
 # the slurm partition the job is queued to.
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/test/job.%J.err
+#SBATCH --error=job.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/test/job.%J.out
+#SBATCH --output=job.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -41,36 +41,29 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-mkdir /scratch/$SLURM_JOB_ID/H36M
-cp -r /home/grotehans/images.zip /scratch/$SLURM_JOB_ID/H36M/
-cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
-unzip -o /scratch/$SLURM_JOB_ID/H36M/images.zip -d /scratch/$SLURM_JOB_ID/H36M/
-
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle /scratch/$SLURM_JOB_ID/H36M/
-cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
-
+#mkdir /scratch/$SLURM_JOB_ID/3DPW
+#cp -R /home/grotehans/3DPW/sequenceFiles /scratch/$SLURM_JOB_ID/3DPW
+cp /home/grotehans/3DPW.zip /scratch/$SLURM_JOB_ID/
+echo TEST1!
+unzip /scratch/$SLURM_JOB_ID/3DPW.zip
+echo TEST2!
+unzip /scratch/$SLURM_JOB_ID/3DPW.zip
+cp -R /home/grotehans/BA_HMR/data/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
+#cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
+#cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 ls /scratch/$SLURM_JOB_ID/
-ls /scratch/$SLURM_JOB_ID/H36M/ -lh
-
 ####
 #c) Execute your tensorflow code in a specific singularity container
 #d) Write your checkpoints to your home directory, so that you still have them if your job fails
 #cnn_minst.py <model save path> <mnist data path>
 ####
-
 singularity exec --nv /common/singularityImages/TCML-Cuda11_0_TF2_4_1_PT1_7_1.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_gpu.py \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-"H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/H36M/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle \
-"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
-"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
-"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
-"DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-
-
+"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle
+#--cfg /home/grotehans/BA_HMR/configs/experiments/zarr_resnet34_ep50.yaml \
+#"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
+#"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
 echo DONE!
 

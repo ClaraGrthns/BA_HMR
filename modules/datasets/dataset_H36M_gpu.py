@@ -57,8 +57,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
         elif self.store_images:
             self.img_size = img_size
-            self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool).to(torch.device(self.device))
-            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32).to(torch.device(self.device))
+            self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
+            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
   
     def __len__(self):
         return len(self.datalist)
@@ -68,9 +68,9 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         img_path = osp.join(self.img_dir, data['img_name'])
         img = np.array(Image.open(img_path))            
         if self.load_from_zarr is not None:
-            img_tensor = self.imgs[index]
+            img_tensor = self.imgs[index].to(self.device)
         elif self.store_images and self.img_cache_indicator[index]:
-            img_tensor = self.img_cache[index]
+            img_tensor = self.img_cache[index].to(self.device)
         else:
             img = np.array(Image.open(img_path))
             if self.mask:
@@ -85,7 +85,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
             img_tensor = to_tensor(img).to(self.device)
             img_tensor = transform(img_tensor, img_size=self.img_size)
             if self.store_images:
-                self.img_cache[index] = img_tensor
+                self.img_cache[index] = img_tensor.to('cpu')
                 self.img_cache_indicator[index] = True
         beta = data['betas']
         pose = data['poses']
@@ -110,7 +110,8 @@ def get_data(data_path,
             img_size,
             mask,
             smpl,
-            backgrounds
+            backgrounds,
+            store_images,
             ):
     return ImageWiseH36M(data_path=data_path,
                         split=split,
@@ -119,5 +120,6 @@ def get_data(data_path,
                         img_size=img_size,
                         mask=mask,
                         smpl=smpl,
-                        backgrounds=backgrounds
-                        )
+                        backgrounds=backgrounds,
+                        store_images=store_images,
+                        a)

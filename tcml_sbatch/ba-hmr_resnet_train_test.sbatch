@@ -47,8 +47,8 @@
 #unzip /scratch/$SLURM_JOB_ID/3DPW.zip
 
 cp -R /home/grotehans/BA_HMR/data/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
+#cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
+#cp -R /home/grotehans/BA_HMR/data/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 
 ls /scratch/$SLURM_JOB_ID/
 ####
@@ -58,12 +58,12 @@ ls /scratch/$SLURM_JOB_ID/
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_0_TF2_4_1_PT1_7_1.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/zarr_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_gpu.py \
+#--cfg /home/grotehans/BA_HMR/configs/experiments/zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-"LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
-"LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
-"LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
-"LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle
+"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
+"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
+#"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
+#"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
 echo DONE!
 

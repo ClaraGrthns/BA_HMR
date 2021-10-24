@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 
-from .dataset_3DPW import get_data as get_data_3dpw
-from .dataset_H36M import get_data as get_data_h36m
-from ..smpl_model.smpl_pose2mesh import SMPL
+from .dataset_3DPW_gpu import get_data as get_data_3dpw
+from .dataset_H36M_gpu import get_data as get_data_h36m
+from modules.smpl_model.smpl_pose2mesh import SMPL
 
 class ImgWiseFullDataset(torch.utils.data.Dataset):
     """Combination of Human 3.6M and 3DPW Dataset"""
@@ -27,14 +27,13 @@ def get_full_train_val_data(
         data_path_3dpw:str='../3DPW',
         num_required_keypoints:int = 0,
         store_sequences=True,
-        store_images_3dpw=True,
+        store_images=True,
         load_from_zarr_3dpw_trn:str=None,
         load_from_zarr_3dpw_val:str=None,
         img_size=224,
         load_ids_imgpaths_seq_trn=None,
         load_ids_imgpaths_seq_val=None,
         data_path_h36m:str='../H36M',
-        store_images_h36m=True,
         load_from_zarr_h36m_trn:str=None,
         load_from_zarr_h36m_val:str=None,
         load_datalist_trn:str=None,
@@ -44,8 +43,8 @@ def get_full_train_val_data(
         val_on_h36m:bool=False,
     ): 
     smpl = SMPL()
-    smpl.layer['neutral'].th_shapedirs = smpl.layer['neutral'].th_shapedirs[:,:,:10]
-    smpl.layer['neutral'].th_betas = smpl.layer['neutral'].th_betas[:,:10]
+    smpl.layer['neutral'].th_shapedirs= smpl.layer['neutral'].th_shapedirs[:,:,:10]
+    smpl.layer['neutral'].th_betas= smpl.layer['neutral'].th_betas[:,:10]
 
     train_data_3dpw = val_data_3dpw = train_data_h36m = val_data_h36m = []
     if dataset == 'full' or dataset == '3dpw':
@@ -53,7 +52,7 @@ def get_full_train_val_data(
                                         split='train',
                                         num_required_keypoints=num_required_keypoints,
                                         store_sequences=store_sequences,
-                                        store_images=store_images_3dpw,
+                                        store_images=store_images,
                                         load_from_zarr=load_from_zarr_3dpw_trn,
                                         img_size=img_size,
                                         load_ids_imgpaths_seq=load_ids_imgpaths_seq_trn,
@@ -63,7 +62,7 @@ def get_full_train_val_data(
                                         split='validation',
                                         num_required_keypoints=num_required_keypoints,
                                         store_sequences=store_sequences,
-                                        store_images=store_images_3dpw,
+                                        store_images=store_images,
                                         load_from_zarr=load_from_zarr_3dpw_val,
                                         img_size=img_size,
                                         load_ids_imgpaths_seq=load_ids_imgpaths_seq_val,
@@ -77,7 +76,6 @@ def get_full_train_val_data(
                                 mask=mask,
                                 backgrounds=backgrounds,
                                 smpl=smpl.layer['neutral'],
-                                store_images=store_images_h36m
                                 )
         if val_on_h36m:
             val_data_h36m = get_data_h36m(data_path=data_path_h36m,
@@ -87,9 +85,7 @@ def get_full_train_val_data(
                                     img_size=img_size,
                                     mask=mask,
                                     backgrounds=backgrounds,
-                                    smpl=smpl.layer['neutral'],
-                                    store_images=store_images_h36m,
-                                    )
+                                    smpl=smpl.layer['neutral'],)
 
     train_data = ImgWiseFullDataset(train_data_3dpw, train_data_h36m)
     val_data = ImgWiseFullDataset(val_data_3dpw, val_data_h36m)

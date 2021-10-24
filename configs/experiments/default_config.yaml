@@ -9,8 +9,8 @@ THREEDPW:
     STORE_SEQUENCES: True
     STORE_IMAGES: True
     LOAD_FROM_ZARR: 
-        TRN: None
-        VAL: None
+        TRN: 
+        VAL: 
     LOAD_IDS_IMGPATHS_SEQ: 
         TRN: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle"
         VAL: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle"
@@ -22,6 +22,7 @@ H36M:
             TRN: '/home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
             VAL: '/home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle'
     MASK: True
+    STORE_IMAGES: False
     VAL_ON_H36M: False
         
 IMG_SIZE: 224

@@ -9,6 +9,3 @@ THREEDPW:
     LOAD_FROM_ZARR: 
         TRN: "/home/grotehans/BA_HMR/3DPW/img_zarr/imgs_3dpw_train.zarr" 
         VAL: "/home/grotehans/BA_HMR/3DPW/img_zarr/imgs_3dpw_valid.zarr" 
-    LOAD_CHUNKS_SEQ:
-        TRN: "../3DPW/data_pickle/img_list_paths_seq/img_list_paths_seq_train_min8_kps.pickle"
-        VAL: "../3DPW/data_pickle/img_list_paths_seq/img_list_paths_seq_validation_min8_kps.pickle"
