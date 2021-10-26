@@ -53,10 +53,11 @@ class ImageWiseH36M(torch.utils.data.Dataset):
 
         if self.load_from_zarr is not None:
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
-        elif self.store_images:
+        else: 
             self.img_size = img_size
-            self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
-            self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
+            if self.store_images: 
+                self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
+                self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
   
     def __len__(self):
         return len(self.datalist)
