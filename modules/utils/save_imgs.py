@@ -9,7 +9,7 @@ import torch
 import zarr
 from .image_utils import to_tensor, transform, transform_visualize, crop_box
 from .data_utils_3dpw import get_ids_imgspaths_seq
-from .data_utils_h36m import get_data_list_h36m
+from .data_utils_h36m import get_data_list_h36m, get_backgrounds_from_folder, get_background
 
 def save_img_zarr_3dpw(data_path:str,
                   zarr_path:str,
@@ -49,8 +49,7 @@ def save_img_zarr_3dpw(data_path:str,
         img_tensor = transform(img_tensor, img_size)
         img_zarr[index] = img_tensor
 
-def save_img_zarr_h36m(annot_dir:str,
-                    img_dir:str,
+def save_img_zarr_h36m(data_path:str,
                     zarr_path:str,
                     subject_list:list,
                     img_size:int,
@@ -58,23 +57,36 @@ def save_img_zarr_h36m(annot_dir:str,
                     load_from_pkl:str,
                     num_chunks:int=None,
                     ):
-       
+    annot_dir = osp.join(data_path,'annotations')
+    img_dir = osp.join(data_path, 'images')
     datalist = get_data_list_h36m(annot_dir=annot_dir, 
                                 subject_list=subject_list, 
                                 fitting_thr=fitting_thr,
                                 load_from_pkl=load_from_pkl,
                                 store_as_pkl=False)
+
+    backgrounds = get_backgrounds_from_folder(osp.join(data_path, 'backgrounds'))
+
     if num_chunks is None:
-        num_chunks= len(datalist)//10                 
+        num_chunks= len(datalist)//10
+
     img_zarr = zarr.open(zarr_path, mode='w', shape=(len(datalist), 3, img_size, img_size), chunks=(num_chunks, None), dtype='float32')
+    
     for data in datalist:
-        img_path = osp.joint(img_dir, data['img_name'])
+        #open image
+        img_path = osp.join(img_dir, data['img_name'])
         zarr_id = data['zarr_id']
-        bbox = data['bbox']
         img = np.array(Image.open(img_path))
-        if bbox is not None:
-            x_min, y_min, x_max, y_max = bbox
-            img = img[y_min:y_max, x_min:x_max]
+        sub_dir, img_name = osp.split(data['img_name'])
+        #open mask and apply mask
+        mask_name = img_name.split('.')[-2]+'_mask.jpg'
+        mask_path = osp.join(img_dir, sub_dir, mask_name)
+        mask = np.round(np.array(Image.open(mask_path))/255-1)
+        img[np.nonzero(mask)] = get_background(img_shape=img.shape, backgrounds=backgrounds)[np.nonzero(mask)]
+        #apply bbox
+        x_min, y_min, x_max, y_max = data['bbox']
+        img = img[y_min:y_max, x_min:x_max]
+        #transform img
         img_tensor = to_tensor(img)
         img_tensor = transform(img_tensor, img_size=img_size)
         img_zarr[zarr_id] = img_tensor

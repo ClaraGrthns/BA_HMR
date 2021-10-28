@@ -10,7 +10,7 @@ import copy
 
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from ..utils.data_utils_3dpw import get_ids_imgspaths_seq 
-from ..utils.geometry import get_smpl_coord
+from ..utils.geometry import get_smpl_coord_torch
 
 class ImageWise3DPW(torch.utils.data.Dataset):
     def __init__(
@@ -32,7 +32,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.store_sequences = store_sequences
         self.store_images = store_images
         self.load_from_zarr = load_from_zarr
-        self.smpl = smpl
+        self.smpl = smpl.to(self.device)
  
         ids_imgpaths_seq = get_ids_imgspaths_seq(data_path=data_path,
                                                 split=self.split,
@@ -102,13 +102,13 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         data = {}
         data['img_path'] = img_path
         data['img'] = img_tensor
-        data['cam_pose'] = torch.FloatTensor(seq['cam_poses'][index_seq]) 
-        data['cam_intr'] = torch.tensor(seq['cam_intrinsics'])
+        data['cam_pose'] = torch.FloatTensor(seq['cam_poses'][index_seq]).to(self.device)
+        data['cam_intr'] = torch.tensor(seq['cam_intrinsics']).to(self.device)
    
         beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10]))
         pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq]))
         trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq]))
-        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices, trans = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
 
         data['vertices'] = vertices
         data['trans'] = trans

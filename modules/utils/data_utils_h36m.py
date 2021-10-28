@@ -6,9 +6,12 @@ import json
 import torch
 from tqdm import tqdm
 from PIL import Image
+import collections
+import random
 
 from ..smpl_model.config_smpl import *
 from ..smpl_model.smpl_pose2mesh import SMPL
+from .data_utils import rand_partition
 
 
 def get_data_list_h36m(annot_dir:str,
@@ -103,6 +106,44 @@ def get_data_list_h36m(annot_dir:str,
             with open(osp.join(out_dir, f'datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
                 pkl.dump(datalist, fp)
         return datalist
+
+def get_data_chunk_list_h36m(annot_dir:str,
+                    img_dir:str,
+                    subject_list:list,
+                    fitting_thr:int,
+                    len_chunks=8,
+                    load_seq_datalist:str=None,
+                    load_datalist:str=None,
+                    store_as_pkl:bool=False,
+                    out_dir:str=None,
+                    ):
+        if load_seq_datalist is not None:
+            with open(load_seq_datalist , "rb") as fp:
+                seq_datalist = pkl.load(fp)
+        else:
+            datalist = get_data_list_h36m(load_from_pkl=load_datalist,
+                                            annot_dir=annot_dir,
+                                            subject_list=subject_list,
+                                            fitting_thr=fitting_thr,
+                                            store_as_pkl=False,
+                                            )
+            seq_name_to_data = collections.defaultdict(list)
+            for data in datalist:
+                img_name = data['img_name']
+                seq_name = img_name.split('/')[0]
+                seq_name_to_data[seq_name].append(data)
+            seq_datalist = list(seq_name_to_data.values())
+            if store_as_pkl:
+                sub_str = f'{min(subject_list)}to{max(subject_list)}'
+                with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
+                    pkl.dump(seq_datalist, fp)
+        chunks = [chunk for seq in seq_datalist for chunk in rand_partition(seq, len(seq)//len_chunks, len_chunks)]
+        return chunks, seq_datalist
+
+def get_background(img_shape, backgrounds):
+    height, width,_ = img_shape
+    mask = random.choice(backgrounds)[:height, :width]
+    return mask
 
 def get_cam_pose_intr(cam_dict):
     cam_pose = torch.cat((torch.FloatTensor(cam_dict['R']), torch.FloatTensor(cam_dict['t'])[:,None]/1000.), dim = 1)

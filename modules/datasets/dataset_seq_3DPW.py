@@ -5,10 +5,14 @@ import pickle as pkl
 import numpy as np
 from PIL import Image
 import torch
+from torch._C import float32
 import zarr
+import copy
 
-from .utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from .utils.data_utils_3dpw import get_chunks_img_paths_list_seq
+
+from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
+from ..utils.data_utils_3dpw import get_chunks_img_paths_list_seq
+from ..utils.geometry import get_smpl_coord
 
 
 class SequenceWise3DPW(torch.utils.data.Dataset):
@@ -17,6 +21,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         data_path:str,
         split:str='train',
         num_required_keypoints:int=0,
+        smpl=None,
         len_chunks:int=8,
         store_sequences=True,
         store_images=True,
@@ -31,7 +36,8 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         self.store_images = store_images
         self.load_from_zarr = load_from_zarr
         self.len_chunks = len_chunks
- 
+        self.smpl = smpl
+
         chunks, img_seqs_list, img_paths, sequences = get_chunks_img_paths_list_seq(data_path=data_path,
                                                                 split=self.split,
                                                                 load_from_pkl=load_chunks_seq,
@@ -53,11 +59,6 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
             self.img_size = img_size
             self.img_cache_indicator = torch.zeros(len(self.img_paths), dtype=torch.bool)
             self.img_cache = torch.empty(len(self.img_paths), 3, img_size, img_size, dtype=torch.float32)
-        self.timers = {
-            'load_sequence': 0,
-            'load_image': 0,
-            'out': 0,
-        }
         
     def __len__(self):
         return len(self.seq_chunks)
@@ -83,7 +84,6 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         poses3d = torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32) 
         poses3d = poses3d.view(-1, 24,3)
         
-        t_load_sequence = time.time()
     
         img_indices = [chunk[-1] for chunk in seq_chunk]
         if self.load_from_zarr is not None:
@@ -102,25 +102,29 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                     self.img_cache[img_indices[idx]] = img_tensor
                     self.img_cache_indicator[img_indices[idx]] = True
                 
-        t_load_image = time.time()
         
         data = {}
         data['img_path'] = img_paths
         data['img'] = imgs_tensor
-        data['betas'] = torch.tensor(seq['betas'][person_id][:10], dtype=torch.float32).expand(self.len_chunks, -1)
-        data['cam_pose'] = torch.tensor(seq['cam_poses'][seq_indices], dtype=torch.float32)    
-        data['poses'] = torch.tensor(seq['poses'][person_id][seq_indices], dtype=torch.float32) 
-        data['poses2d'] = poses2d 
-        data['poses3d'] = poses3d
-        data['cam_pose'] = torch.tensor(seq['cam_poses'][seq_indices], dtype=torch.float32)  
-        data['cam_intr'] = torch.tensor(seq['cam_intrinsics'], dtype=torch.float32)
-        data['trans'] = torch.tensor(seq['trans'][person_id][seq_indices], dtype=torch.float32)
+        data['cam_pose'] = torch.FloatTensor(seq['cam_poses'][seq_indices])  
+        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(self.len_chunks, -1)
+        poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
+        transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
+        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=float32)
+        for idx, (beta, pose, trans) in enumerate(zip(betas, poses, transs)):
+            verts, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+            vertices[idx]= verts
+            transs[idx] = trans
+
+        #data['poses2d'] = poses2d 
+        #data['poses3d'] = poses3d
+        data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
+
+        data['betas'] = betas
+        data['poses'] = poses
+        data['trans'] = transs
         
-        t_out = time.time()
         
-        self.timers['load_sequence'] += t_load_sequence - t_start
-        self.timers['load_image'] += t_load_image - t_load_sequence
-        self.timers['out'] += t_out - t_load_image
 
         return data         
     def set_chunks(self):

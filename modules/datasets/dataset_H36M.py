@@ -4,9 +4,8 @@ import zarr
 from PIL import Image
 import numpy as np
 import copy
-import random
 
-from ..utils.data_utils_h36m import get_data_list_h36m
+from ..utils.data_utils_h36m import get_data_list_h36m, get_background
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box, lcc
 from ..smpl_model.smpl_pose2mesh import SMPL
 from ..utils.geometry import get_smpl_coord
@@ -78,7 +77,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 mask_path = osp.join(self.img_dir, sub_dir, mask_name)
                 mask = np.round(np.array(Image.open(mask_path))/255-1)
                 ## Cut out mask and use different backgrounds
-                img[np.nonzero(mask)] = self.get_background(img.shape)[np.nonzero(mask)]
+                img[np.nonzero(mask)] = get_background(img_shape = img.shape, backgrounds=self.backgrounds)[np.nonzero(mask)]
             x_min, y_min, x_max, y_max = item['bbox']
             img = img[y_min:y_max, x_min:x_max]
             img_tensor = to_tensor(img)
@@ -101,10 +100,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['trans'] = trans
         data['vertices'] = vertices
         return data
-    def get_background(self, img_shape):
-        height, width,_ = img_shape
-        mask = random.choice(self.backgrounds)[:height, :width]
-        return mask
+
         
         
 def get_data(data_path,

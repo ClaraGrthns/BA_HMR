@@ -2,6 +2,7 @@ LOGGING:
     LOGDIR: "./logging/"
     LOG_STEPS: 200
 OUT_DIR: './checkpoints/'
+DATASET_OPT: 'full'
 DATASETS: 
     THREEDPW: '../3DPW'
     H36M: '/home/grotehans/H36M'
