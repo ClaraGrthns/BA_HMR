@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=fulldata
+#SBATCH --job-name=ba-hmr
 
 #resources:
 
@@ -14,7 +14,7 @@
 #SBATCH --partition=day
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=18G
+#SBATCH --mem-per-cpu=5G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
 #SBATCH --gres=gpu:A4000:1
@@ -50,30 +50,21 @@ cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
 unzip -o /scratch/$SLURM_JOB_ID/H36M/images.zip -d /scratch/$SLURM_JOB_ID/H36M/
 echo unziped images.zip!
 cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
-echo copied zarr img and pickle files!
+cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
 ls /scratch/$SLURM_JOB_ID/
 ls /scratch/$SLURM_JOB_ID/H36M/
 ####
 #c) Execute your tensorflow code in a specific singularity container
 #d) Write your checkpoints to your home directory, so that you still have them if your job fails
 ####
-
 singularity exec --nv /common/singularityImages/TCML-Cuda11_0_TF2_4_1_PT1_7_1.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
---opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-"OUT_DIR" ./checkpoints/fulldata/storeTrue \
-"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
-"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
-"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
-"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
-"DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
+--dataset h36m \
+--opts "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
 "H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
-"H36M.STORE_IMAGES" True \
-
+"H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_9to11subj.pickle \
+"H36M.VAL_ON_H36M" True \
 
 
 
