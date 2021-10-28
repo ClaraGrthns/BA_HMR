@@ -18,6 +18,8 @@ import torch
 import numpy as np
 from torch.nn import functional as F
 import transforms3d
+from pytorch3d.transforms import axis_angle_to_matrix
+import math
 
 def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
@@ -57,6 +59,40 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         #smpl_mesh_coord += smpl_trans
         smpl_trans = torch.FloatTensor(smpl_trans)
         smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord)
+        return smpl_mesh_coord, smpl_trans
+
+def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
+        # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
+        pose = pose.view(-1, 3)
+        beta = beta.view(1, -1)
+        # camera rotation and translation
+        R = cam_pose[:3, :3].reshape(3, 3)
+        t = cam_pose[0:3,3].reshape(3)
+
+        # change to mean shape if beta is too far from it
+        beta[(beta.abs() > 3).any(dim=1)] = 0.
+
+        # transform world coordinate to camera coordinate
+        root_pose = pose[root_idx, :]
+        angle = torch.linalg.norm(root_pose)
+        root_pose = axangle2mat(root_pose / angle, angle)
+        root_pose = torch.matmul(R, root_pose)
+
+        root_pose= rotation_matrix_to_angle_axis(root_pose[None])
+        pose[root_idx] = root_pose
+        pose = pose.view(1, -1)
+        # get mesh and joint coordinates
+        smpl_mesh_coord, smpl_joint_coord = smpl(pose, beta)
+
+        # incorporate face keypoints
+        smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord).reshape(-1, 3)
+        smpl_joint_coord = torch.FloatTensor(smpl_joint_coord).reshape(-1, 3)
+        # compenstate rotation (translation from origin to root joint was not cancled)
+        smpl_trans = trans.reshape(3)  # translation vector from smpl coordinate to h36m world coordinate
+        smpl_trans = torch.matmul(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
+        root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
+        smpl_trans = smpl_trans - root_joint_coord + torch.matmul(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
+       
         return smpl_mesh_coord, smpl_trans
     
 def batch_rodrigues(axisang):
@@ -384,3 +420,38 @@ def rot6d_to_rotmat(x):
     rot_mats = torch.stack([b1, b2, b3], dim=-1)
 
     return rot_mats
+
+def axangle2mat(axis, angle, is_normalized=False):
+    '''
+    borrowed from: https://github.com/matthew-brett/transforms3d/blob/master/transforms3d/axangles.py
+    Rotation matrix for rotation angle `angle` around `axis`
+    Parameters
+    ----------
+    axis : 3 element sequence
+       vector specifying axis for rotation.
+    angle : scalar
+       angle of rotation in radians.
+    is_normalized : bool, optional
+       True if `axis` is already normalized (has norm of 1).  Default False.
+    Returns
+    -------
+    mat : array shape (3,3)
+       rotation matrix for specified rotation
+    Notes
+    -----
+    From: http://en.wikipedia.org/wiki/Rotation_matrix#Axis_and_angle
+    '''
+    x, y, z = axis
+    if not is_normalized:
+        n = math.sqrt(x*x + y*y + z*z)
+        x = x/n
+        y = y/n
+        z = z/n
+    c = math.cos(angle); s = math.sin(angle); C = 1-c
+    xs = x*s;   ys = y*s;   zs = z*s
+    xC = x*C;   yC = y*C;   zC = z*C
+    xyC = x*yC; yzC = y*zC; zxC = z*xC
+    return torch.FloatTensor([
+            [ x*xC+c,   xyC-zs,   zxC+ys ],
+            [ xyC+zs,   y*yC+c,   yzC-xs ],
+            [ zxC-ys,   yzC+xs,   z*zC+c ]])

@@ -16,19 +16,17 @@ from hrnet_model_imgnet.config.default import update_hrnet_cfg
 def parse_args():
     parser = argparse.ArgumentParser(description="Start Training")
     parser.add_argument('--cfg', type=str, help='cfg file path to yaml')
-    parser.add_argument('--dataset', type=str, help="'full', 'h36m', '3dpw'", default='full')
     parser.add_argument('--opts', nargs="+", help='configuration options (key must already exist!)')
     parser.add_argument('--cfg_hrnet', type=str, help='when using hrnets: path to cfg yaml',
                         default='configs/experiments_hrnet_imgnet/cls_hrnet_w40_sgd_lr5e-2_wd1e-4_bs32_x100.yaml')
-    
     args = parser.parse_args()
     cfg = update_cfg(args.cfg, args.opts)
     cfg_hrnet = None
     if "hrnet" in cfg.MODEL.ENCODER:
         cfg_hrnet = update_hrnet_cfg(args.cfg_hrnet)
-    return cfg, cfg_hrnet, args.dataset
+    return cfg, cfg_hrnet
 
-def main(cfg, cfg_hrnet, dataset_opt):
+def main(cfg, cfg_hrnet):
     pprint.pprint(cfg)
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
     writer.add_text('config', pprint.pformat(cfg), 0) 
@@ -39,7 +37,7 @@ def main(cfg, cfg_hrnet, dataset_opt):
     backgrounds = get_backgrounds_from_folder(osp.join(cfg.DATASETS.H36M, 'backgrounds'))
 
     train_data, val_data = get_full_train_val_data(
-        dataset= dataset_opt,
+        dataset= cfg.DATASET_OPT,
         data_path_3dpw= cfg.DATASETS.THREEDPW,
         num_required_keypoints = cfg.TRAIN.NUM_REQUIRED_KPS,
         store_sequences=cfg.THREEDPW.STORE_SEQUENCES,
@@ -83,5 +81,5 @@ def main(cfg, cfg_hrnet, dataset_opt):
     )
     
 if __name__ == '__main__':
-    cfg, cfg_hrnet, dataset_opt = parse_args()
-    main(cfg, cfg_hrnet, dataset_opt)
+    cfg, cfg_hrnet = parse_args()
+    main(cfg, cfg_hrnet)
