@@ -7,6 +7,7 @@ import torch
 from tqdm import tqdm
 from PIL import Image
 import collections
+import random
 
 from ..smpl_model.config_smpl import *
 from ..smpl_model.smpl_pose2mesh import SMPL
@@ -139,7 +140,10 @@ def get_data_chunk_list_h36m(annot_dir:str,
         chunks = [chunk for seq in seq_datalist for chunk in rand_partition(seq, len(seq)//len_chunks, len_chunks)]
         return chunks, seq_datalist
 
- 
+def get_background(img_shape, backgrounds):
+    height, width,_ = img_shape
+    mask = random.choice(backgrounds)[:height, :width]
+    return mask
 
 def get_cam_pose_intr(cam_dict):
     cam_pose = torch.cat((torch.FloatTensor(cam_dict['R']), torch.FloatTensor(cam_dict['t'])[:,None]/1000.), dim = 1)
