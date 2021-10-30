@@ -50,7 +50,7 @@ ls /scratch/$SLURM_JOB_ID/
 #c) Execute your code in a specific singularity container
 ####
 
-singularity exec --nv /common/singularityImages/TCML-Cuda11_0_TF2_4_1_PT1_7_1.simg \
+singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/create_zarr.py --encoder 'hrnet'
 echo DONE!
 

@@ -18,7 +18,6 @@ import torch
 import numpy as np
 from torch.nn import functional as F
 import transforms3d
-from pytorch3d.transforms import axis_angle_to_matrix
 import math
 
 def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
