@@ -29,11 +29,11 @@ if __name__ == '__main__':
 
     save_img_zarr_h36m(
         data_path=args.data_path,
-        zarr_path=osp.join(args.out_dir, 'img_zarr', f'imgs_h36m_{args.encoder}_thr{args.fitting_thr}_{args.subject_list}subj.zarr'),
+        zarr_path=osp.join(args.data_path, 'img_zarr', f'imgs_h36m_{args.encoder}_thr{args.fitting_thr}_{args.subject_list}subj.zarr'),
         img_size=img_size,
         subject_list=subject_list,
         fitting_thr=args.fitting_thr,
-        load_from_pkl=osp.join(args.data_path,'data_pickle', f'datalist_h36m_thr{args.fitting_thr}_{args.subject_list}subj.pickle'),
+        load_from_pkl=osp.join(args.data_path, f'datalist_h36m_thr{args.fitting_thr}_{args.subject_list}subj.pickle'),
     )
     
     print('zarr is done!')
