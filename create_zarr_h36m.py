@@ -24,7 +24,7 @@ if __name__ == '__main__':
     elif args.subject_list == '9to11':
         subject_list = [9, 11]
     else:
-        raise ValueError('subject list not valid')
+        subject_list = [1]
 
 
     save_img_zarr_h36m(
