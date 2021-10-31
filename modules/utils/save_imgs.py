@@ -75,7 +75,7 @@ def save_img_zarr_h36m(data_path:str,
             'out': 0,
         }
     if num_chunks is None:
-        num_chunks= len(datalist)//100
+        num_chunks= len(datalist)//50
 
     img_zarr = zarr.open(zarr_path, mode='w', shape=(len(datalist), 3, img_size, img_size), chunks=(num_chunks, None), dtype='float32')
     

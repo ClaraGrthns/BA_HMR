@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:0
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=4
+#SBATCH --time=2-12
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 

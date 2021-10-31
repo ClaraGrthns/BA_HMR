@@ -1,6 +1,7 @@
 import os.path as osp
 import argparse
 from modules.utils.save_imgs import save_img_zarr_h36m
+import random
 
 
 if __name__ == '__main__':
@@ -26,10 +27,11 @@ if __name__ == '__main__':
     else:
         subject_list = [1]
 
+    rand_id = random.randint(0, 1000000)
 
     save_img_zarr_h36m(
         data_path=args.data_path,
-        zarr_path=osp.join(args.data_path, 'img_zarr', f'imgs_h36m_{args.encoder}_thr{args.fitting_thr}_{args.subject_list}subj.zarr'),
+        zarr_path=osp.join(args.data_path, 'img_zarr', f'imgs_h36m_{args.encoder}_thr{args.fitting_thr}_{args.subject_list}subj_{rand_id}.zarr'),
         img_size=img_size,
         subject_list=subject_list,
         fitting_thr=args.fitting_thr,
