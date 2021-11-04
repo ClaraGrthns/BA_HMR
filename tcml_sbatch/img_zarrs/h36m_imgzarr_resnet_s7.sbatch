@@ -4,14 +4,14 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=zarr_imgs
+#SBATCH --job-name=zarr_s7w
 
 #resources:
 
 #SBATCH --cpus-per-task=12
 # the job can use and see 4 CPUs (from max 24).
 
-#SBATCH --partition=day
+#SBATCH --partition=week
 # the slurm partition the job is queued to.
 
 #SBATCH --mem-per-cpu=18G
@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:0
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=24:00:00
+#SBATCH --time=2-12
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -48,7 +48,7 @@ echo copied images.zip!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
 unzip -o /scratch/$SLURM_JOB_ID/H36M/images.zip -d /scratch/$SLURM_JOB_ID/H36M/
 echo unziped images.zip!
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj.pickle /scratch/$SLURM_JOB_ID/H36M/ --subject_list 7to7
+cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_7to7subj.pickle /scratch/$SLURM_JOB_ID/H36M/ 
 ls /scratch/$SLURM_JOB_ID/
 ls /scratch/$SLURM_JOB_ID/H36M/
 

@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=zarr_imgs
+#SBATCH --job-name=zarr_s1
 
 #resources:
 
