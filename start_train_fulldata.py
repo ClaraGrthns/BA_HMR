@@ -35,6 +35,9 @@ def main(cfg, cfg_hrnet):
     criterion = get_criterion_dict(cfg.LOSS)
 
     backgrounds = get_backgrounds_from_folder(osp.join(cfg.DATASETS.H36M, 'backgrounds'))
+    load_from_zarr_h36m_trn = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.TRN]
+    if cfg.H36M.VAL_ON_H36M:
+        load_from_zarr_h36m_val = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.VAL]
 
     train_data, val_data = get_full_train_val_data(
         dataset= cfg.DATASET_OPT,
@@ -48,14 +51,16 @@ def main(cfg, cfg_hrnet):
         load_ids_imgpaths_seq_trn=cfg.THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN,
         load_ids_imgpaths_seq_val=cfg.THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL,
         data_path_h36m=cfg.DATASETS.H36M,
-        load_from_zarr_h36m_trn=cfg.H36M.LOAD_FROM_ZARR.TRN,
-        load_from_zarr_h36m_val=cfg.H36M.LOAD_FROM_ZARR.VAL,
+        load_from_zarr_h36m_trn=load_from_zarr_h36m_trn,
+        load_from_zarr_h36m_val=load_from_zarr_h36m_val,
         load_datalist_trn=cfg.H36M.LOAD_DATALIST.TRN,
         load_datalist_val=cfg.H36M.LOAD_DATALIST.VAL,
         backgrounds=backgrounds,
         mask=cfg.H36M.MASK,
         store_images_h36m=cfg.H36M.STORE_IMAGES,
         val_on_h36m=cfg.H36M.VAL_ON_H36M,
+        subject_list_trn=cfg.H36M.SUBJ_LIST.TRN,
+        subject_list_val=cfg.H36M.SUBJ_LIST.VAL,
     )
 
     print("length train and val data:", len(train_data), len(val_data))

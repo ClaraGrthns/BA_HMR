@@ -8,9 +8,9 @@ import torch
 import zarr
 import copy
 
-from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
-from ..utils.data_utils_3dpw import get_ids_imgspaths_seq 
-from ..utils.geometry import get_smpl_coord_torch
+from ...utils.image_utils import to_tensor, transform, transform_visualize, crop_box
+from ...utils.data_utils_3dpw import get_ids_imgspaths_seq 
+from ...utils.geometry import get_smpl_coord_torch
 
 class ImageWise3DPW(torch.utils.data.Dataset):
     def __init__(

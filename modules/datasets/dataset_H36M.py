@@ -6,16 +6,16 @@ import numpy as np
 import copy
 
 from ..utils.data_utils_h36m import get_data_list_h36m, get_background
-from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box, lcc
+from ..utils.image_utils import to_tensor, transform
 from ..smpl_model.smpl_pose2mesh import SMPL
 from ..utils.geometry import get_smpl_coord
 
 class ImageWiseH36M(torch.utils.data.Dataset):
     def __init__(self,
                 data_path:str='../H36M',
-                split:str='train',
+                subject_list:list=[],
                 smpl=None,
-                load_from_zarr:str=None,
+                load_from_zarr:list=None,
                 load_datalist:str=None,
                 img_size:int=224,
                 mask:bool = False,
@@ -32,26 +32,20 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.smpl = smpl
         self.mask = mask
         self.store_images = store_images
-
-        if split == 'full':
-            self.subject_list= [1, 5, 6, 7, 8, 9, 11]
-        elif split == 'train':
-            self.subject_list = [1, 5, 6, 7, 8]
-        elif split == 'validation': 
-            self.subject_list = [9,11]
-        else:
-            self.subject_list=[1]
+        self.subject_list = subject_list
+    
             
         self.datalist = get_data_list_h36m(annot_dir=self.annot_dir,
-                                            subject_list=self.subject_list,
-                                            fitting_thr=self.fitting_thr,
-                                            load_from_pkl=load_datalist,
-                                            store_as_pkl=False,
-                                            out_dir=None,)
-        a = self.load_from_zarr is not None
+                                        subject_list=self.subject_list,
+                                        fitting_thr=self.fitting_thr,
+                                        load_from_pkl=load_datalist,
+                                        store_as_pkl=False,
+                                        out_dir=None,) 
 
         if self.load_from_zarr is not None:
-            self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
+            self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+             ### Load array into memory
+
         else: 
             self.img_size = img_size
             if self.store_images: 
@@ -64,9 +58,10 @@ class ImageWiseH36M(torch.utils.data.Dataset):
     def __getitem__(self, index):
         item = copy.deepcopy(self.datalist[index])
         img_path = osp.join(self.img_dir, item['img_name'])
-        img = np.array(Image.open(img_path))            
         if self.load_from_zarr is not None:
-            img_tensor = self.imgs[index]
+            subject = item['subject']
+            zarr_id = item['zarr_id']
+            img_tensor = self.imgs[subject][zarr_id]
         elif self.store_images and self.img_cache_indicator[index]:
             img_tensor = self.img_cache[index]
         else:
@@ -104,7 +99,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         
         
 def get_data(data_path,
-            split,
+            subject_list,
             load_from_zarr,
             load_datalist,
             img_size,
@@ -114,7 +109,7 @@ def get_data(data_path,
             store_images,
             ):
     return ImageWiseH36M(data_path=data_path,
-                        split=split,
+                        subject_list=subject_list,
                         load_from_zarr=load_from_zarr,
                         load_datalist=load_datalist,
                         img_size=img_size,

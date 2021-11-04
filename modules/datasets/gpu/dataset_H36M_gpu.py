@@ -6,10 +6,10 @@ import numpy as np
 import copy
 import random
 
-from ..utils.data_utils_h36m import get_data_list_h36m
-from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box, lcc
-from ..smpl_model.smpl_pose2mesh import SMPL
-from ..utils.geometry import get_smpl_coord
+from ...utils.data_utils_h36m import get_data_list_h36m
+from ...utils.image_utils import to_tensor, transform, transform_visualize, crop_box, lcc
+from ...smpl_model.smpl_pose2mesh import SMPL
+from ...utils.geometry import get_smpl_coord
 
 class ImageWiseH36M(torch.utils.data.Dataset):
     def __init__(self,

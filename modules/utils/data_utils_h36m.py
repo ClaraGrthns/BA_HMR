@@ -116,27 +116,29 @@ def get_data_chunk_list_h36m(annot_dir:str,
                     load_datalist:str=None,
                     store_as_pkl:bool=False,
                     out_dir:str=None,
+                    seq_datalist=None,
                     ):
-        if load_seq_datalist is not None:
-            with open(load_seq_datalist , "rb") as fp:
-                seq_datalist = pkl.load(fp)
-        else:
-            datalist = get_data_list_h36m(load_from_pkl=load_datalist,
-                                            annot_dir=annot_dir,
-                                            subject_list=subject_list,
-                                            fitting_thr=fitting_thr,
-                                            store_as_pkl=False,
-                                            )
-            seq_name_to_data = collections.defaultdict(list)
-            for data in datalist:
-                img_name = data['img_name']
-                seq_name = img_name.split('/')[0]
-                seq_name_to_data[seq_name].append(data)
-            seq_datalist = list(seq_name_to_data.values())
-            if store_as_pkl:
-                sub_str = f'{min(subject_list)}to{max(subject_list)}'
-                with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
-                    pkl.dump(seq_datalist, fp)
+        if seq_datalist is None:
+            if load_seq_datalist is not None:
+                with open(load_seq_datalist , "rb") as fp:
+                    seq_datalist = pkl.load(fp)
+            else:
+                datalist = get_data_list_h36m(load_from_pkl=load_datalist,
+                                                annot_dir=annot_dir,
+                                                subject_list=subject_list,
+                                                fitting_thr=fitting_thr,
+                                                store_as_pkl=False,
+                                                )
+                seq_name_to_data = collections.defaultdict(list)
+                for data in datalist:
+                    img_name = data['img_name']
+                    seq_name = img_name.split('/')[0]
+                    seq_name_to_data[seq_name].append(data)
+                seq_datalist = list(seq_name_to_data.values())
+                if store_as_pkl:
+                    sub_str = f'{min(subject_list)}to{max(subject_list)}'
+                    with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
+                        pkl.dump(seq_datalist, fp)
         chunks = [chunk for seq in seq_datalist for chunk in rand_partition(seq, len(seq)//len_chunks, len_chunks)]
         return chunks, seq_datalist
 

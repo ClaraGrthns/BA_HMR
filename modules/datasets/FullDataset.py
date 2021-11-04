@@ -35,13 +35,15 @@ def get_full_train_val_data(
         load_ids_imgpaths_seq_val=None,
         data_path_h36m:str='../H36M',
         store_images_h36m=True,
-        load_from_zarr_h36m_trn:str=None,
-        load_from_zarr_h36m_val:str=None,
+        load_from_zarr_h36m_trn:list=None,
+        load_from_zarr_h36m_val:list=None,
         load_datalist_trn:str=None,
         load_datalist_val:str=None,
         backgrounds:list=None,
         mask:bool=True,
         val_on_h36m:bool=False,
+        subject_list_trn:list=[],
+        subject_list_val:list=[],
     ): 
     smpl = SMPL()
     smpl.layer['neutral'].th_shapedirs = smpl.layer['neutral'].th_shapedirs[:,:,:10]
@@ -70,7 +72,7 @@ def get_full_train_val_data(
                                         smpl=smpl.layer['neutral'],)
     if dataset == 'full' or dataset == 'h36m':
         train_data_h36m = get_data_h36m(data_path=data_path_h36m,
-                                split='train',
+                                subject_list=subject_list_trn,
                                 load_from_zarr=load_from_zarr_h36m_trn,
                                 load_datalist=load_datalist_trn,
                                 img_size=img_size,
@@ -81,7 +83,7 @@ def get_full_train_val_data(
                                 )
         if val_on_h36m:
             val_data_h36m = get_data_h36m(data_path=data_path_h36m,
-                                    split='validation',
+                                    subject_list=subject_list_val, 
                                     load_from_zarr=load_from_zarr_h36m_val,
                                     load_datalist=load_datalist_val,
                                     img_size=img_size,
