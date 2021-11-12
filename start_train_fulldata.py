@@ -36,9 +36,8 @@ def main(cfg, cfg_hrnet):
 
     backgrounds = get_backgrounds_from_folder(osp.join(cfg.DATASETS.H36M, 'backgrounds'))
     load_from_zarr_h36m_trn = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.TRN]
-    if cfg.H36M.VAL_ON_H36M:
-        load_from_zarr_h36m_val = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.VAL]
-
+    load_from_zarr_h36m_val = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.VAL]
+    print(load_from_zarr_h36m_trn, load_from_zarr_h36m_val)
     train_data, val_data = get_full_train_val_data(
         dataset= cfg.DATASET_OPT,
         data_path_3dpw= cfg.DATASETS.THREEDPW,

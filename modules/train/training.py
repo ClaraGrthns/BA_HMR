@@ -81,6 +81,7 @@ def _loop(
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
         epoch_mvpe += metrics['VERTS'](preds['VERTS'], targets['VERTS']) 
 
+        ## TODO
         if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                 # ...log the running loss
                 # ...log the metrics
@@ -113,6 +114,7 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
     )
     
 def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
+    #TODO
     with torch.no_grad():
         return _loop(
             name='validate',
@@ -188,7 +190,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             log_steps=log_steps, 
                             device=device,
                             )
-        
+
+        #TODO
         if mvpe < min_mpve:
             min_mpve = mvpe
             save_checkpoint(model=model, 

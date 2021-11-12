@@ -25,7 +25,7 @@ H36M:
         VAL: [9, 11]
     MASK: True
     STORE_IMAGES: False
-    VAL_ON_H36M: False
+    VAL_ON_H36M: True
         
 IMG_SIZE: 224
 

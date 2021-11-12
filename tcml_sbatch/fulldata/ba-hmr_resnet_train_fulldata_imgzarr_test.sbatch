@@ -14,10 +14,10 @@
 #SBATCH --partition=test
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=5G
+#SBATCH --mem-per-cpu=18G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
-#SBATCH --gres=0
+#SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
 #SBATCH --time=10:00
@@ -46,10 +46,10 @@
 mkdir /scratch/$SLURM_JOB_ID/H36M
 mkdir /scratch/$SLURM_JOB_ID/H36M/img_zarr 
 cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_1to1subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
-cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_5to5subj_328813.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_5to5subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
 echo copied h36m image zarr!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
-cp -R /home/grotehans/H36M/data_pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to5subj.pickle /scratch/$SLURM_JOB_ID/
 
 #cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 #cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
@@ -68,9 +68,9 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 'OUT_DIR' ./checkpoints/fulldata/storeFalse \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25
-"H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID//H36M/img_zarr/imgs_h36m_resnet_thr25
-#"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
+"H6M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to5subj.pickle \
+"H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID//H36M/img_zarr/imgs_h36m_resnet_thr25 \
+"H36THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
 #"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
 #"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 #"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
