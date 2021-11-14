@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import os.path as osp
-from ..utils.data_utils_3dpw import save_checkpoint
+from ..utils.data_utils import save_checkpoint
 from ..smpl_model._smpl import SMPL, Mesh, H36M_J17_NAME
         
 def _loop(
@@ -29,12 +29,14 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0)
     epoch_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    
+    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
+
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
+        verts_gt_full = batch['vertices'].to(device)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -45,7 +47,6 @@ def _loop(
         # --> dim verts: (bs*seqlen)x|V|x3
         
         # Create Groundtruth-Mesh and downsample it
-        verts_gt_full = smpl(poses_gt.reshape(-1, 72), betas_gt.reshape(-1, 10))
         verts_gt_sub = mesh_sampler.downsample(verts_gt_full)
         verts_gt_sub2 = mesh_sampler.downsample(verts_gt_full, n1=0, n2=2)
 
@@ -87,22 +88,32 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-    
-        if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
-                # ...log the running loss
-                # ...log the metrics
-            for loss_key in running_loss.keys():
-                writer.add_scalar(f'{name} loss: {loss_key}' ,
-                                running_loss[loss_key]/log_steps,
-                                epoch * len(loader) + i)
-                running_loss[loss_key] = 0.0
+            epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
+        if train: 
+            if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
+                    # ...log the running loss
+                    # ...log the metrics
+                for loss_key in running_loss.keys():
+                    writer.add_scalar(f'{name} loss: {loss_key}' ,
+                                    running_loss[loss_key]/log_steps,
+                                    epoch * len(loader) + i)
+                    running_loss[loss_key] = 0.0
 
-            for metr_key in running_metrics.keys():
-                writer.add_scalar(f'{name} metrics: {metr_key}',
-                                 running_metrics[metr_key]/log_steps,
-                                 epoch * len(loader) + i)
-                running_metrics[metr_key] = 0
-    return sum(epoch_loss.values())/len(loader)
+                for metr_key in running_metrics.keys():
+                    writer.add_scalar(f'{name} metrics: {metr_key}',
+                                    running_metrics[metr_key]/log_steps,
+                                    epoch * len(loader) + i)
+                    running_metrics[metr_key] = 0
+    if not train:
+        for loss_key in epoch_loss.keys():
+            writer.add_scalar(f'{name} loss: {loss_key}' ,
+                            epoch_loss[loss_key]/len(loader),
+                            epoch+1)
+        for metr_key in running_metrics.keys():
+            writer.add_scalar(f'{name} metrics: {metr_key}',
+                            epoch_metrics[metr_key]/len(loader),
+                            epoch+1)
+    return sum(epoch_loss.values())/len(loader), epoch['VERTS']/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device,):
     return _loop(
@@ -122,22 +133,26 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
     )
     
 def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
-    with torch.no_grad():
-        return _loop(
-            name='validate',
-            train=False,
-            model=model,
-            optimizer=None,
-            loader=loader_val,
-            criterion=criterion,
-            metrics=metrics,
-            smpl=smpl,
-            mesh_sampler=mesh_sampler,
-            epoch=epoch,
-            writer=writer,
-            log_steps = log_steps, 
-            device=device,
-        )
+    sets = ['3dpw', 'h36m']
+    loss_mtr = np.zeros(2,2)
+    for idx, loader in enumerate(loader_val):
+        with torch.no_grad():
+            loss_mtr[idx,:] = _loop(
+                name=f'validate {sets[idx]}',
+                train=False,
+                model=model,
+                optimizer=None,
+                loader=loader,
+                criterion=criterion,
+                metrics=metrics,
+                smpl=smpl,
+                mesh_sampler=mesh_sampler,
+                epoch=epoch,
+                writer=writer,
+                log_steps = log_steps, 
+                device=device,
+            )
+    return np.mean(loss_mtr, 0)
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                 batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
@@ -172,7 +187,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     min_mpve = float('inf') 
 
     for epoch in range(num_epochs):
-        loss_trn = trn_loop(model=model, 
+        loss_trn,_ = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 
                             criterion=criterion, 
@@ -193,7 +208,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                         checkpoint_dir=checkpoint_dir,
                         cfgs=cfgs,)
 
-        loss_val = val_loop(model=model, 
+        loss_val, mpve = val_loop(model=model, 
                             loader_val=loader_val,
                             criterion=criterion, 
                             metrics=metrics,
@@ -204,8 +219,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             log_steps=log_steps, 
                             device=device,
                             )
-        if loss_val < min_mpve:
-            min_mpve = loss_val
+        if mpve < min_mpve:
+            min_mpve = mpve
             save_checkpoint(model=model, 
                             optimizer=optimizer,
                             loss=loss_val,

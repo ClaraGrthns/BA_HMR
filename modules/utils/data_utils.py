@@ -20,9 +20,9 @@ def rand_partition(list_in, n, len_chunks):
     random.shuffle(rand_chunks)
     return [rand_chunks[i::n][:len_chunks] for i in range(n)]
 
-def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_subdir, cfgs, type='imgwise' ):
+def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs ):
     # Save model checkpoint in subdir corresponding to date of training and model/training params
-    filepath = osp.join(checkpoint_subdir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
+    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
     save_model = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -42,16 +42,13 @@ def mk_dir_checkpoint(checkpoint_dir, cfgs, type='imgwise' ):
     return checkpoint_subdir
 
 class AverageMeter(object):
-    
     def __init__(self):
         self.reset()
-
     def reset(self):
         self.val = 0
         self.avg = 0
         self.sum = 0
         self.count = 0
-
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n

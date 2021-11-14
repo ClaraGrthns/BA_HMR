@@ -94,5 +94,5 @@ def get_full_train_val_data(
                                     )
 
     train_data = ImgWiseFullDataset(train_data_3dpw, train_data_h36m)
-    val_data = ImgWiseFullDataset(val_data_3dpw, val_data_h36m)
+    val_data = [val_data_3dpw, val_data_h36m]
     return train_data, val_data
