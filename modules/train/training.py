@@ -27,9 +27,9 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
-    epoch_loss = 0
+    epoch_loss =  dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    epoch_mvpe = 0
+    epoch_mvpe = dict.fromkeys(metrics.keys(), 0)
     smpl = SMPL().to(device)    
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
@@ -68,7 +68,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
-            epoch_loss += loss_batch.item()
+            epoch_loss += loss_batch.item() #TODO
         
         if train:
             # backward
@@ -79,23 +79,24 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
+        # TODO
         epoch_mvpe += metrics['VERTS'](preds['VERTS'], targets['VERTS']) 
 
-        ## TODO
-        if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
-                # ...log the running loss
-                # ...log the metrics
-            for loss_key in running_loss.keys():
-                writer.add_scalar(f'{name} loss: {loss_key}' ,
-                                running_loss[loss_key]/log_steps,
-                                epoch * len(loader) + i)
-                running_loss[loss_key] = 0.0
+        if train:
+            if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
+                    # ...log the running loss
+                    # ...log the metrics
+                for loss_key in running_loss.keys():
+                    writer.add_scalar(f'{name} loss: {loss_key}' ,
+                                    running_loss[loss_key]/log_steps,
+                                    epoch * len(loader) + i)
+                    running_loss[loss_key] = 0.0
 
-            for metr_key in running_metrics.keys():
-                writer.add_scalar(f'{name} metrics: {metr_key}',
-                                 running_metrics[metr_key]/log_steps,
-                                 epoch * len(loader) + i)
-                running_metrics[metr_key] = 0
+                for metr_key in running_metrics.keys():
+                    writer.add_scalar(f'{name} metrics: {metr_key}',
+                                    running_metrics[metr_key]/log_steps,
+                                    epoch * len(loader) + i)
+                    running_metrics[metr_key] = 0
     return epoch_loss/len(loader), epoch_mvpe/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):

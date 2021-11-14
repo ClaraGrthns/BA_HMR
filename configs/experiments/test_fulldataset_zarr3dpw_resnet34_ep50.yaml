@@ -1,0 +1,19 @@
+LOGGING:
+    LOGDIR: "logging/test/"  
+TRAIN:
+    NUM_EPOCHS: 50
+MODEL: 
+    ENCODER: 'resnet34'
+THREEDPW:
+    STORE_IMAGES: False
+    LOAD_FROM_ZARR: 
+        TRN: "../3DPW/img_zarr/imgs_3dpw_train.zarr" 
+        VAL: "../3DPW/img_zarr/imgs_3dpw_valid.zarr" 
+H36M: 
+    LOAD_FROM_ZARR: "../H36M/img_zarr/imgs_h36m_resnet_thr25"
+    LOAD_DATALIST:
+        TRN: "../H36M/data_pickle/datalist_h36m_thr25_1to1subj.pickle"
+        VAL: "../H36M/data_pickle/datalist_h36m_thr25_1to1subj.pickle"
+    SUBJ_LIST:
+        TRN: [1]
+        VAL: [1]
