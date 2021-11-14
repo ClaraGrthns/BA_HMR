@@ -4,7 +4,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 import os.path as osp
 
-
+from modules.utils.data_utils import mk_dir_checkpoint
 from modules.models import get_model
 from modules.train.training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
@@ -38,6 +38,8 @@ def main(cfg, cfg_hrnet):
     load_from_zarr_h36m_trn = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.TRN]
     load_from_zarr_h36m_val = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.VAL]
     print(load_from_zarr_h36m_trn, load_from_zarr_h36m_val)
+
+
     train_data, val_data = get_full_train_val_data(
         dataset= cfg.DATASET_OPT,
         data_path_3dpw= cfg.DATASETS.THREEDPW,
@@ -68,6 +70,8 @@ def main(cfg, cfg_hrnet):
     dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     writer.add_graph(model, dummy_input)
 
+    checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet) )
+
     train_model(
         model=model,
         num_epochs=cfg.TRAIN.NUM_EPOCHS,
@@ -80,7 +84,7 @@ def main(cfg, cfg_hrnet):
         learning_rate=cfg.TRAIN.LEARNING_RATE,
         writer=writer,
         log_steps = cfg.LOGGING.LOG_STEPS,
-        checkpoint_dir=cfg.OUT_DIR,
+        checkpoint_dir=checkpoint_dir,
         cfgs=(cfg, cfg_hrnet),
     )
     
