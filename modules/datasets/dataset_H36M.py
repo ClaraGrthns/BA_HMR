@@ -45,9 +45,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
 
         if self.load_from_zarr is not None:
             self.imgs = {}
-            print(subject_list)
             for subj, zarr_path in zip(self.subject_list, self.load_from_zarr):
-                print(subj, zarr_path, os.listdir(osp.split(zarr_path)[0]))
                 self.imgs[subj] = torch.from_numpy(zarr.load(zarr_path))
 
             #self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }

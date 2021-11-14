@@ -92,7 +92,8 @@ def get_full_train_val_data(
                                     smpl=smpl.layer['neutral'],
                                     store_images=store_images_h36m,
                                     )
-
+    print(f'length train data: 3dpw: {len(train_data_3dpw)}, h36m: {len(train_data_h36m)}, total: {len(train_data_3dpw)+len(train_data_h36m)}')
+    print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
     train_data = ImgWiseFullDataset(train_data_3dpw, train_data_h36m)
     val_data = [val_data_3dpw, val_data_h36m]
     return train_data, val_data

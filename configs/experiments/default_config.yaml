@@ -5,7 +5,7 @@ OUT_DIR: './checkpoints/'
 DATASET_OPT: 'full'
 DATASETS: 
     THREEDPW: '../3DPW'
-    H36M: '/home/grotehans/H36M'
+    H36M: '../H36M'
 THREEDPW:
     STORE_SEQUENCES: True
     STORE_IMAGES: True

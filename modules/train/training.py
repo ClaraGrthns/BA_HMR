@@ -30,7 +30,7 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0)
     epoch_loss = dict.fromkeys(criterion.keys(), 0)
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    epoch_metrics = 0
+    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
     smpl = SMPL().to(device)    
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
@@ -125,7 +125,7 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
     
 def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
     sets = ['3dpw', 'h36m']
-    loss_mtr = np.zeros(2,2)
+    loss_mtr = np.zeros([2,2])
     for idx, loader in enumerate(loader_val):
         with torch.no_grad():
             loss_mtr[idx,:] = _loop(
@@ -175,7 +175,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps,
                             device=device,
-                            )
+                            ) 
         save_checkpoint(model=model, 
                         optimizer=optimizer,
                         loss=loss_trn,
@@ -184,7 +184,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                         iteration=(epoch+1)*len(loader_trn),
                         checkpoint_dir=checkpoint_dir,
                         cfgs=cfgs,
-                        )
+                        )  
         loss_val, mvpe = val_loop(model=model, 
                             loader_val=loader_val,
                             criterion=criterion, 

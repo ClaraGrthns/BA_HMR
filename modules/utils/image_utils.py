@@ -104,7 +104,7 @@ def visualize_mesh(img, cam_intr, smpl, beta=None, pose=None, trans=None, vertic
     faces = smpl.faces.cpu().numpy()
     if vertices is None:
         vertices = smpl(pose=pose, beta=beta) + trans
-    vertices = vertices[0].detach().numpy()
+    vertices = vertices.detach().numpy()
     ## camera: rotation matrix, t, f and center
         #cam_rot = rotation_matrix_to_angle_axis(cam_pose[None, :3, :3]).detach().numpy().ravel()
     cam_rot = rotation_matrix_to_angle_axis(torch.eye(3)[None]).detach().numpy().ravel() 
