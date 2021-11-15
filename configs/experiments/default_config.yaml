@@ -8,7 +8,7 @@ DATASETS:
     H36M: '../H36M'
 THREEDPW:
     STORE_SEQUENCES: True
-    STORE_IMAGES: True
+    STORE_IMAGES: False
     LOAD_FROM_ZARR: 
         TRN: 
         VAL: 

@@ -4,14 +4,14 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=ba-hmr
+#SBATCH --job-name=full-mem
 
 #resources:
 
 #SBATCH --cpus-per-task=12
 # the job can use and see 12 CPUs (from max 24).
 
-#SBATCH --partition=week
+#SBATCH --partition=day
 # the slurm partition the job is queued to.
 
 #SBATCH --mem-per-cpu=18G
@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:A4000:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=5-00
+#SBATCH --time=5:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -43,8 +43,7 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-mkdir /scratch/$SLURM_JOB_I
-D/H36M
+mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
@@ -56,7 +55,9 @@ cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 echo copied zarr img and pickle files!
-#ls /scratch/$SLURM_JOB_ID/
+
+ls /scratch/$SLURM_JOB_ID/
+du -sh /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 #c) Execute your tensorflow code in a specific singularity container

@@ -21,7 +21,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 img_size:int=224,
                 mask:bool = False,
                 fitting_thr:int=25,
-                store_images:bool=True,
+                store_images:bool=False,
                 backgrounds:list=None,
                 ):
         super(ImageWiseH36M, self).__init__()
@@ -32,10 +32,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.fitting_thr = fitting_thr  # milimeter --> Threshhold joints from smpl mesh to h36m gt
         self.smpl = smpl
         self.mask = mask
-        self.store_images = store_images
+        self.store_images = False
         self.subject_list = subject_list
-    
-            
         self.datalist = get_data_list_h36m(annot_dir=self.annot_dir,
                                         subject_list=self.subject_list,
                                         fitting_thr=self.fitting_thr,
@@ -44,16 +42,12 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                                         out_dir=None,) 
 
         if self.load_from_zarr is not None:
-            self.imgs = {}
-            for subj, zarr_path in zip(self.subject_list, self.load_from_zarr):
-                self.imgs[subj] = torch.from_numpy(zarr.load(zarr_path))
-
-            #self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+            self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
              ### Load array into memory
-
         else: 
             self.img_size = img_size
             if self.store_images: 
+                print('test h36m')
                 self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
                 self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
   

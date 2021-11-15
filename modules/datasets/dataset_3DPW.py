@@ -20,7 +20,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         num_required_keypoints:int = 0,
         smpl=None,
         store_sequences=True,
-        store_images=True,
+        store_images=False,
         load_from_zarr:str=None,
         img_size=224,
         load_ids_imgpaths_seq=None,
@@ -29,7 +29,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.split = split
         self.num_required_keypoints = num_required_keypoints
         self.store_sequences = store_sequences
-        self.store_images = store_images
+        self.store_images = False
         self.load_from_zarr = load_from_zarr
         self.smpl = smpl
  
@@ -44,25 +44,20 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             self.sequences = ids_imgpaths_seq['sequences']
         else: 
             self.sequence_path = osp.join(data_path, 'sequenceFiles', split)
+            
         if self.load_from_zarr is not None:
             self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
         else:
             self.img_size = img_size
             if self.store_images:
+                print('test 3dpw')
                 self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
                 self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
-        self.timers = {
-            'load_sequence': 0,
-            'load_image': 0,
-            'out': 0,
-        }
         
     def __len__(self):
         return len(self.image_paths)
         
     def __getitem__(self, index):
-        t_start = time.time()
-
         # load sequence
         img_path = self.image_paths[index]
         _, img_name = os.path.split(img_path)
@@ -78,10 +73,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         index_seq = int((img_name.split('.')[0]).split('_')[1])
         person_id = self.person_ids[index]
         poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)    
-        #poses3d = torch.tensor(seq['jointPositions'][person_id][index_seq], dtype=torch.float32) 
-        #poses3d = poses3d.view(-1, 24,3)
-        
-        t_load_sequence = time.time()
+
     
         # Resize Image to img_sizeximg_size format with padding (hrnet: 256x256)
         if self.load_from_zarr is not None:
@@ -96,8 +88,6 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             if self.store_images:
                 self.img_cache[index] = img_tensor
                 self.img_cache_indicator[index] = True
-                
-        t_load_image = time.time()
         
         data = {}
         data['img_path'] = img_path
@@ -114,13 +104,6 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         data['trans'] = trans
         data['vertices'] = vertices
 
-        #data['poses2d'] = poses2d 
-        #data['poses3d'] = poses3d
-        
-        t_out = time.time()
-        self.timers['load_sequence'] += t_load_sequence - t_start
-        self.timers['load_image'] += t_load_image - t_load_sequence
-        self.timers['out'] += t_out - t_load_image
         return data
     
 def get_train_val_data(data_path, 

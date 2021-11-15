@@ -3,6 +3,7 @@ import pprint
 from torch.utils.tensorboard import SummaryWriter
 import torch
 import os.path as osp
+import os, psutil
 
 from modules.utils.data_utils import mk_dir_checkpoint
 from modules.models import get_model
@@ -69,6 +70,8 @@ def main(cfg, cfg_hrnet):
     writer.add_graph(model, dummy_input)
 
     checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet) )
+    process = psutil.Process(os.getpid())
+    print('start train, current memory', process.memory_info().rss/(1024*2024*1024), 'GB')
 
     train_model(
         model=model,

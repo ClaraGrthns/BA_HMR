@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import os.path as osp
+import os, psutil
 
 from ..smpl_model._smpl import SMPL, H36M_J17_NAME
 from ..utils.data_utils import save_checkpoint
@@ -31,7 +32,8 @@ def _loop(
     epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
     epoch_metrics = dict.fromkeys(metrics.keys(), 0)
-    smpl = SMPL().to(device)    
+    smpl = SMPL().to(device)  
+    print(running_loss, epoch_loss)  
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
@@ -39,6 +41,7 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch['vertices'].to(device)
+        print('shapes', betas_gt.shape, poses_gt.shape, vertices_gt.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -80,7 +83,7 @@ def _loop(
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
             epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-
+        '''
         if train:
             if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                     # ...log the running loss
@@ -96,6 +99,8 @@ def _loop(
                                     running_metrics[metr_key]/log_steps,
                                     epoch * len(loader) + i)
                     running_metrics[metr_key] = 0
+        '''
+    '''    
     if not train:
         writer.add_scalar(f'{name} loss: Vertices' ,
                             epoch_loss/len(loader),
@@ -104,6 +109,9 @@ def _loop(
             writer.add_scalar(f'{name} metrics: {metr_key}',
                             epoch_metrics[metr_key]/len(loader),
                             epoch+1)
+    '''
+    process = psutil.Process(os.getpid())
+    print('current memory, loop', process.memory_info().rss/(1024*2024*1024), 'GB')
     return epoch_loss/len(loader), epoch_metrics['VERTS']/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
@@ -163,6 +171,10 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
         batch_size_val = batch_size_trn    
     loader_val = [torch.utils.data.DataLoader(dataset=data,batch_size=batch_size_val, shuffle=False,) for data in  data_val]
     min_mpve = float('inf') 
+
+    process = psutil.Process(os.getpid())
+    print('current memory, train model, val und dat loader', process.memory_info().rss/(1024*2024*1024), 'GB')
+
     for epoch in range(num_epochs):
         loss_trn,_ = trn_loop(model=model, 
                             optimizer=optimizer, 

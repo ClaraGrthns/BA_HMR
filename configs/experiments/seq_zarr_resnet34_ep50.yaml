@@ -1,7 +1,7 @@
 LOGGING:
     LOGDIR: "./logging/seq_zarr_resnet34_ep50/"  
 THREEDPW:
-    STORE_IMAGES: True
+    STORE_IMAGES: False
     LOAD_FROM_ZARR: 
         TRN: "../3DPW/img_zarr/imgs_3dpw_train.zarr" 
         VAL: "../3DPW/img_zarr/imgs_3dpw_valid.zarr" 
