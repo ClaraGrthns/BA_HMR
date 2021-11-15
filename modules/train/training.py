@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import os.path as osp
+import os, psutil
 
 from ..smpl_model._smpl import SMPL, H36M_J17_NAME
 from ..utils.data_utils import save_checkpoint
@@ -28,18 +29,19 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
-    epoch_loss = dict.fromkeys(criterion.keys(), 0)
+    epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
     epoch_metrics = dict.fromkeys(metrics.keys(), 0)
-    smpl = SMPL().to(device)    
+    smpl = SMPL().to(device)  
+    print(running_loss, epoch_loss)  
     
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
-        trans_gt = batch["trans"].to(device)
         vertices_gt = batch['vertices'].to(device)
+        print('shapes', betas_gt.shape, poses_gt.shape, vertices_gt.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -49,7 +51,7 @@ def _loop(
    
         # Calculate Vertices with SMPL-model
         betas_pred, poses_pred = prediction  
-        vertices_pred = smpl(beta=betas_pred, pose=poses_pred, transl=trans_gt)
+        vertices_pred = smpl(beta=betas_pred, pose=poses_pred)
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_gt = smpl.get_h36m_joints(vertices_gt)
@@ -69,7 +71,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
-            epoch_loss[loss_key] += loss_batch.item()
+            epoch_loss += loss_batch.item()
         
         if train:
             # backward
@@ -81,7 +83,7 @@ def _loop(
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
             epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-
+        '''
         if train:
             if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                     # ...log the running loss
@@ -97,16 +99,20 @@ def _loop(
                                     running_metrics[metr_key]/log_steps,
                                     epoch * len(loader) + i)
                     running_metrics[metr_key] = 0
+        '''
+    '''    
     if not train:
-        for loss_key in epoch_loss.keys():
-            writer.add_scalar(f'{name} loss: {loss_key}' ,
-                            epoch_loss[loss_key]/len(loader),
+        writer.add_scalar(f'{name} loss: Vertices' ,
+                            epoch_loss/len(loader),
                             epoch+1)
         for metr_key in running_metrics.keys():
             writer.add_scalar(f'{name} metrics: {metr_key}',
                             epoch_metrics[metr_key]/len(loader),
                             epoch+1)
-    return sum(epoch_loss.values())/len(loader), epoch_metrics['VERTS']/len(loader)
+    '''
+    process = psutil.Process(os.getpid())
+    print('current memory, loop', process.memory_info().rss/(1024*2024*1024), 'GB')
+    return epoch_loss/len(loader), epoch_metrics['VERTS']/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -124,12 +130,12 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
     )
     
 def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
-    sets = ['3dpw', 'h36m']
+    data_sets = ['3dpw', 'h36m']
     loss_mtr = np.zeros([2,2])
     for idx, loader in enumerate(loader_val):
         with torch.no_grad():
             loss_mtr[idx,:] = _loop(
-                name=f'validate {sets[idx]}',
+                name=f'validate {data_sets[idx]}',
                 train=False,
                 model=model,
                 optimizer=None,
@@ -165,6 +171,10 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
         batch_size_val = batch_size_trn    
     loader_val = [torch.utils.data.DataLoader(dataset=data,batch_size=batch_size_val, shuffle=False,) for data in  data_val]
     min_mpve = float('inf') 
+
+    process = psutil.Process(os.getpid())
+    print('current memory, train model, val und dat loader', process.memory_info().rss/(1024*2024*1024), 'GB')
+
     for epoch in range(num_epochs):
         loss_trn,_ = trn_loop(model=model, 
                             optimizer=optimizer, 
