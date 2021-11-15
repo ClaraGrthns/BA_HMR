@@ -55,10 +55,10 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         smpl_trans = smpl_trans - root_joint_coord + np.dot(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
         
         # translation
-        smpl_mesh_coord += smpl_trans
+        #smpl_mesh_coord += smpl_trans
         smpl_trans = torch.FloatTensor(smpl_trans)
         smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord)
-        return smpl_mesh_coord, smpl_trans
+        return smpl_mesh_coord, smpl_trans, pose
 
 def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
@@ -91,7 +91,6 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         smpl_trans = torch.matmul(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
         root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
         smpl_trans = smpl_trans - root_joint_coord + torch.matmul(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
-       
         return smpl_mesh_coord, smpl_trans
     
 def batch_rodrigues(axisang):

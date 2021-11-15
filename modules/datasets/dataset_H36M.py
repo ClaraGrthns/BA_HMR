@@ -94,7 +94,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         beta = item['betas']
         pose = item['poses']
         trans = item['trans']
-        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = trans

@@ -20,7 +20,7 @@
 #SBATCH --gres=gpu:A4000:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=7-00
+#SBATCH --time=5-00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -43,7 +43,8 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-mkdir /scratch/$SLURM_JOB_ID/H36M
+mkdir /scratch/$SLURM_JOB_I
+D/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/

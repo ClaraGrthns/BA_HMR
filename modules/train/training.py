@@ -28,7 +28,7 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
-    epoch_loss = dict.fromkeys(criterion.keys(), 0)
+    epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
     epoch_metrics = dict.fromkeys(metrics.keys(), 0)
     smpl = SMPL().to(device)    
@@ -38,7 +38,6 @@ def _loop(
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
-        trans_gt = batch["trans"].to(device)
         vertices_gt = batch['vertices'].to(device)
         # zero the parameter gradients
         if train:
@@ -49,7 +48,7 @@ def _loop(
    
         # Calculate Vertices with SMPL-model
         betas_pred, poses_pred = prediction  
-        vertices_pred = smpl(beta=betas_pred, pose=poses_pred, transl=trans_gt)
+        vertices_pred = smpl(beta=betas_pred, pose=poses_pred)
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_gt = smpl.get_h36m_joints(vertices_gt)
@@ -69,7 +68,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
-            epoch_loss[loss_key] += loss_batch.item()
+            epoch_loss += loss_batch.item()
         
         if train:
             # backward
@@ -98,15 +97,14 @@ def _loop(
                                     epoch * len(loader) + i)
                     running_metrics[metr_key] = 0
     if not train:
-        for loss_key in epoch_loss.keys():
-            writer.add_scalar(f'{name} loss: {loss_key}' ,
-                            epoch_loss[loss_key]/len(loader),
+        writer.add_scalar(f'{name} loss: Vertices' ,
+                            epoch_loss/len(loader),
                             epoch+1)
         for metr_key in running_metrics.keys():
             writer.add_scalar(f'{name} metrics: {metr_key}',
                             epoch_metrics[metr_key]/len(loader),
                             epoch+1)
-    return sum(epoch_loss.values())/len(loader), epoch_metrics['VERTS']/len(loader)
+    return epoch_loss/len(loader), epoch_metrics['VERTS']/len(loader)
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -124,12 +122,12 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
     )
     
 def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
-    sets = ['3dpw', 'h36m']
+    data_sets = ['3dpw', 'h36m']
     loss_mtr = np.zeros([2,2])
     for idx, loader in enumerate(loader_val):
         with torch.no_grad():
             loss_mtr[idx,:] = _loop(
-                name=f'validate {sets[idx]}',
+                name=f'validate {data_sets[idx]}',
                 train=False,
                 model=model,
                 optimizer=None,

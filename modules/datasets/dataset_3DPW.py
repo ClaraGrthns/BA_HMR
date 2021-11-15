@@ -108,7 +108,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10]))
         pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq]))
         trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq]))
-        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = trans
