@@ -45,10 +45,10 @@ def get_full_train_val_data(
         subject_list_trn:list=[],
         subject_list_val:list=[],
     ): 
+    print('get fulldata set')
     smpl = SMPL()
     smpl.layer['neutral'].th_shapedirs = smpl.layer['neutral'].th_shapedirs[:,:,:10]
     smpl.layer['neutral'].th_betas = smpl.layer['neutral'].th_betas[:,:10]
-
     train_data_3dpw = val_data_3dpw = train_data_h36m = val_data_h36m = []
     if dataset == 'full' or dataset == '3dpw':
         train_data_3dpw = get_data_3dpw(data_path=data_path_3dpw, 

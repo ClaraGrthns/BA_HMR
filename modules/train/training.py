@@ -31,17 +31,14 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0)
     epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
-    smpl = SMPL().to(device)  
-    print(running_loss, epoch_loss)  
-    
-    for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
-        
+    smpl = SMPL().to(device)      
+    #for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
+    for i, batch in enumerate(loader): 
+        print(f'{i} / {len(loader)}') 
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch['vertices'].to(device)
-        print('shapes', betas_gt.shape, poses_gt.shape, vertices_gt.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -60,6 +57,9 @@ def _loop(
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
+
+        process = psutil.Process(os.getpid())
+        print('current memory, batch loop', process.memory_info().rss/(1024*1024*1024), 'GB')
         
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
@@ -78,41 +78,46 @@ def _loop(
             loss_batch.backward()
             # optimize
             optimizer.step()
-            
+        process = psutil.Process(os.getpid())
+        print('current memory, batch loop2', process.memory_info().rss/(1024*1024*1024), 'GB')
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-            epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-        '''
-        if train:
-            if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
-                    # ...log the running loss
-                    # ...log the metrics
-                for loss_key in running_loss.keys():
-                    writer.add_scalar(f'{name} loss: {loss_key}' ,
-                                    running_loss[loss_key]/log_steps,
-                                    epoch * len(loader) + i)
-                    running_loss[loss_key] = 0.0
-
-                for metr_key in running_metrics.keys():
-                    writer.add_scalar(f'{name} metrics: {metr_key}',
-                                    running_metrics[metr_key]/log_steps,
-                                    epoch * len(loader) + i)
-                    running_metrics[metr_key] = 0
-        '''
-    '''    
+        process = psutil.Process(os.getpid())
+        print('current memory, batch loop3', process.memory_info().rss/(1024*1024*1024), 'GB')
+        if train and i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
+            running_loss, running_metrics = log_loss_and_metrics(writer=writer, 
+                                                                loss=running_loss, 
+                                                                metrics=running_metrics, 
+                                                                logsteps=log_steps, 
+                                                                iteration=epoch * len(loader) + i,
+                                                                name=name,
+                                                                train=train)
     if not train:
-        writer.add_scalar(f'{name} loss: Vertices' ,
-                            epoch_loss/len(loader),
-                            epoch+1)
-        for metr_key in running_metrics.keys():
-            writer.add_scalar(f'{name} metrics: {metr_key}',
-                            epoch_metrics[metr_key]/len(loader),
-                            epoch+1)
-    '''
+        running_loss, running_metrics = log_loss_and_metrics(writer=writer, 
+                                                            loss=running_loss, 
+                                                            metrics=running_metrics, 
+                                                            logsteps=len(loader),
+                                                            iteration=epoch+1, 
+                                                            name=name)
+    
     process = psutil.Process(os.getpid())
-    print('current memory, loop', process.memory_info().rss/(1024*2024*1024), 'GB')
-    return epoch_loss/len(loader), epoch_metrics['VERTS']/len(loader)
+    print('current memory, loop', process.memory_info().rss/(1024*1024*1024), 'GB')
+    return epoch_loss, running_loss, running_metrics
+
+def log_loss_and_metrics(writer, loss, metrics, logsteps, iteration, name, train):
+    # ...log the running loss
+    for loss_key in loss.keys():
+        writer.add_scalar(f'{name} loss: {loss_key}', loss[loss_key]/log_steps, iteration)
+        if train:
+            loss[loss_key] = 0.0
+    # ...log the metrics
+    for metr_key in metrics.keys():
+        writer.add_scalar(f'{name} metrics: {metr_key}', metrics[metr_key]/log_steps, iteration)
+        if train: 
+            metrics[metr_key] = 0
+    if train:
+        return loss, metrics
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device,):
     return _loop(
@@ -131,11 +136,15 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
     
 def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device,):
     data_sets = ['3dpw', 'h36m']
-    loss_mtr = np.zeros([2,2])
-    for idx, loader in enumerate(loader_val):
+    epoch_loss = 0
+    epoch_losses = dict.fromkeys(criterion.keys(), 0)
+    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
+    total_length = sum[len(loader) for loader in loader_val]
+    for data_set, loader in zip(data_sets, loader_val):
         with torch.no_grad():
-            loss_mtr[idx,:] = _loop(
-                name=f'validate {data_sets[idx]}',
+            name = f'validate on {data_set}'
+            loss, losses, metrics = _loop(
+                name=name,
                 train=False,
                 model=model,
                 optimizer=None,
@@ -147,7 +156,27 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                 log_steps = log_steps, 
                 device=device,
             )
-    return np.mean(loss_mtr, 0)
+            epoch_loss += loss
+            for key in epoch_losses.metrics():
+                epoch_losses[key] += losses[key]
+            for key in epoch_metrics.metrics():
+                epoch_metrics[key] += metrics[key]
+                
+            log_loss_and_metrics(writer=writer, 
+                                loss=losses, 
+                                metrics=metrics, 
+                                logsteps=len(loader),
+                                iteration=epoch+1, 
+                                name=name,
+                                train=False,)
+    log_loss_and_metrics(writer=writer, 
+                        loss=epoch_losses, 
+                        metrics=epoch_metrics, 
+                        logsteps=total_length,
+                        iteration=epoch+1, 
+                        name='validate on 3dpw & h36m'',
+                        train=False,)        
+    return epoch_loss/total_length, running_metrics['VERTS']/total_length
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                 batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
@@ -173,7 +202,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     min_mpve = float('inf') 
 
     process = psutil.Process(os.getpid())
-    print('current memory, train model, val und dat loader', process.memory_info().rss/(1024*2024*1024), 'GB')
+    print('current memory, train model, val und dat loader', process.memory_info().rss/(1024*1024*1024), 'GB')
 
     for epoch in range(num_epochs):
         loss_trn,_ = trn_loop(model=model, 

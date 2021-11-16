@@ -66,12 +66,12 @@ def main(cfg, cfg_hrnet):
 
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
     
-    dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
-    writer.add_graph(model, dummy_input)
+    #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
+    #writer.add_graph(model, dummy_input)
 
     checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet) )
     process = psutil.Process(os.getpid())
-    print('start train, current memory', process.memory_info().rss/(1024*2024*1024), 'GB')
+    print('datasets loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
 
     train_model(
         model=model,
@@ -90,5 +90,6 @@ def main(cfg, cfg_hrnet):
     )
     
 if __name__ == '__main__':
+    print('start')
     cfg, cfg_hrnet = parse_args()
     main(cfg, cfg_hrnet)
