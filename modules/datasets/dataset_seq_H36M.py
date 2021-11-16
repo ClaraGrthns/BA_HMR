@@ -36,41 +36,26 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         self.annot_dir = osp.join(data_path,'annotations')
         self.load_from_zarr = load_from_zarr
         self.backgrounds = backgrounds
-        self.fitting_thr = fitting_thr  # milimeter --> Threshhold joints from smpl mesh to h36m gt
         self.smpl = smpl
         self.mask = mask
         self.store_images = store_images
         self.len_chunks = len_chunks
 
         self.subject_list= subject_list
-        chunks = []
-        seq_datalist = []
         
-        for idx, subj_list in enumerate(load_seq_datalist):
-            sub_chunks, sub_seq_datalist = get_data_chunk_list_h36m(self.annot_dir,
-                    self.img_dir,
-                    subject_list=[self.subject_list[idx]],
-                    fitting_thr=25,
-                    len_chunks=8,
-                    load_seq_datalist=subj_list,
-                    load_datalist=load_datalist,
-                    store_as_pkl=False,
-                    )
-            chunks.append(sub_chunks)
-            seq_datalist.append(sub_seq_datalist)
-        self.chunks = [chunk for sub_chunks in chunks for chunk in sub_chunks]
-        self.seq_datalist = [seq for sub_seq_datalist in seq_datalist for seq in sub_seq_datalist]
-
+        chunks, seq_datalist = get_data_chunk_list_h36m(annot_dir = self.annot_dir,
+                                                        subject_list=self.subject_list,
+                                                        fitting_thr=fitting_thr,
+                                                        len_chunks=len_chunks,
+                                                        load_seq_datalist=load_seq_datalist,
+                                                        load_datalist=load_datalist,
+                                                        store_as_pkl=False,
+                                                        )
+        self.chunks = chunks
+        self.seq_datalist = seq_datalist
         if self.load_from_zarr is not None:
-            self.imgs = {}
-            print(subject_list)
-            for subj, zarr_path in zip(self.subject_list, self.load_from_zarr):
-                print(subj, zarr_path, os.listdir(osp.split(zarr_path)[0]))
-                self.imgs[subj] = torch.from_numpy(zarr.load(zarr_path))
-
-            #self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+            self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
              ### Load array into memory
-
         else: 
             self.img_size = img_size
             if self.store_images: 
@@ -90,7 +75,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             zarr_ids = [item['zarr_id'] for item in chunk]
             imgs_tensor = self.imgs[subject][zarr_ids]
         elif self.store_images and torch.all(self.img_cache_indicator[zarr_ids]):
-            img_tensor = self.img_cache[zarr_ids]
+            imgs_tensor = self.img_cache[zarr_ids]
         else:
             imgs_tensor = torch.zeros(len(img_paths), 3, self.img_size, self.img_size)
             for idx, item in enumerate(chunk):
@@ -101,7 +86,6 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
                     mask_path = osp.join(self.img_dir, sub_dir, mask_name)
                     mask = np.round(np.array(Image.open(mask_path))/255-1)
                 ## Cut out mask and use different backgrounds
-
                 img[np.nonzero(mask)] = get_background(img_shape = img.shape, backgrounds=self.backgrounds)[np.nonzero(mask)]
             x_min, y_min, x_max, y_max = item['bbox']
             img = img[y_min:y_max, x_min:x_max]
@@ -140,7 +124,7 @@ def get_data(data_path,
             backgrounds,
             store_images,
             ):
-    return ImageWiseH36M(data_path=data_path,
+    return SequenceWiseH36M(data_path=data_path,
                         subject_list=subject_list,
                         load_from_zarr=load_from_zarr,
                         load_datalist=load_datalist,
