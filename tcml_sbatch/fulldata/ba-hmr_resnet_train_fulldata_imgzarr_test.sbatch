@@ -45,33 +45,38 @@
 ####
 mkdir /scratch/$SLURM_JOB_ID/H36M
 mkdir /scratch/$SLURM_JOB_ID/H36M/img_zarr 
-cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_1to1subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+#cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_1to1subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+#cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_5to5subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+#cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_6to6subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+#cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_7to7subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+#cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_8to8subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+
+#cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj.pickle /scratch/$SLURM_JOB_ID/
-
+#cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_11to11subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
+#cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
+echo copied datapickle!
 cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 #cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 #cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 echo copied zarr img and pickle files!
 ls /scratch/$SLURM_JOB_ID/
-ls /scratch/$SLURM_JOB_ID/H36M/
+ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 #c) Execute your tensorflow code in a specific singularity container
 #d) Write your checkpoints to your home directory, so that you still have them if your job fails
 ####
-
+echo executing python file now!
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_fulldata.py \
+--cfg /home/grotehans/BA_HMR/configs/experiments/test_fulldataset_zarr3dpw_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 'OUT_DIR' ./checkpoints/fulldata/storeFalse \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"H6M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to1subj.pickle \
-"H6M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to1subj.pickle \
-
+"H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID//H36M/img_zarr/imgs_h36m_resnet_thr25 \
-"H36THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 

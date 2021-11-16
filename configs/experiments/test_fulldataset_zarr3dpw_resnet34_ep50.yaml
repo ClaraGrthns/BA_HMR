@@ -19,5 +19,7 @@ H36M:
         TRN: "../H36M/data_pickle/datalist_h36m_thr25_11to11subj.pickle"
         VAL: "../H36M/data_pickle/datalist_h36m_thr25_11to11subj.pickle"
     SUBJ_LIST:
-        TRN: [11]
-        VAL: [11]
+        TRN: [1, 5, 6, 7, 8]
+        VAL: [9, 11]
+    VAL_ON_H36M: False
+    

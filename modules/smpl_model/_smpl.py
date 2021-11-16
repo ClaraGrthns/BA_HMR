@@ -73,7 +73,7 @@ class SMPL(nn.Module):
         row = J_regressor.row
         col = J_regressor.col
         data = J_regressor.data
-        i = torch.LongTensor([row, col])
+        i = torch.LongTensor(np.array([row, col]))
         v = torch.FloatTensor(data)
         J_regressor_shape = [24, 6890]
         self.register_buffer('J_regressor', torch.sparse.FloatTensor(i, v, J_regressor_shape).to_dense())

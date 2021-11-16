@@ -14,10 +14,10 @@
 #SBATCH --partition=day
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=18G
-# the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node) u
+#SBATCH --mem-per-cpu=19G
+# the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
-#SBATCH --gres=gpu:A4000:1
+#SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
 #SBATCH --time=5:00:00
