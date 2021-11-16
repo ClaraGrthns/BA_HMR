@@ -45,6 +45,7 @@ def get_full_train_val_data(
         subject_list_trn:list=[],
         subject_list_val:list=[],
     ): 
+    print('initialize smpl model')
     smpl = SMPL()
     smpl.layer['neutral'].th_shapedirs = smpl.layer['neutral'].th_shapedirs[:,:,:10]
     smpl.layer['neutral'].th_betas = smpl.layer['neutral'].th_betas[:,:10]

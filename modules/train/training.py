@@ -41,7 +41,6 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch['vertices'].to(device)
-        print('shapes', betas_gt.shape, poses_gt.shape, vertices_gt.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -60,7 +59,8 @@ def _loop(
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
-        
+        process = psutil.Process(os.getpid())
+        print('current memory, loop', process.memory_info().rss/(1024*2024*1024), 'GB')
         # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt}
@@ -83,7 +83,7 @@ def _loop(
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
             epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-        '''
+        
         if train:
             if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
                     # ...log the running loss
@@ -99,8 +99,6 @@ def _loop(
                                     running_metrics[metr_key]/log_steps,
                                     epoch * len(loader) + i)
                     running_metrics[metr_key] = 0
-        '''
-    '''    
     if not train:
         writer.add_scalar(f'{name} loss: Vertices' ,
                             epoch_loss/len(loader),
@@ -109,7 +107,6 @@ def _loop(
             writer.add_scalar(f'{name} metrics: {metr_key}',
                             epoch_metrics[metr_key]/len(loader),
                             epoch+1)
-    '''
     process = psutil.Process(os.getpid())
     print('current memory, loop', process.memory_info().rss/(1024*2024*1024), 'GB')
     return epoch_loss/len(loader), epoch_metrics['VERTS']/len(loader)

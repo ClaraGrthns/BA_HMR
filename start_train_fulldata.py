@@ -28,6 +28,9 @@ def parse_args():
     return cfg, cfg_hrnet
 
 def main(cfg, cfg_hrnet):
+    print('test start training')
+    process = psutil.Process(os.getpid())
+    print('start training 1, current memory', process.memory_info().rss/(1024*2024*1024), 'GB')
     pprint.pprint(cfg)
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
     writer.add_text('config', pprint.pformat(cfg), 0) 
