@@ -17,3 +17,11 @@ H36M:
     SUBJ_LIST:
         TRN: [1, 5, 6, 7, 8]
         VAL: [9, 11]
+METRIC: 
+    SMPL: 0.
+    VERTS: 1.
+    KP_2D: 0.
+    KP_3D: 0.
+    VERTS_FULL: 0.
+    VERTS_SUB2: 0.
+    VERTS_SUB: 0.

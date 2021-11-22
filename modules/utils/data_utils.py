@@ -2,7 +2,7 @@ import os.path as osp
 import torch
 from pathlib import Path
 from datetime import date
-
+import matplotlib.pyplot as plt
 import random 
 
  
@@ -20,9 +20,9 @@ def rand_partition(list_in, n, len_chunks):
     random.shuffle(rand_chunks)
     return [rand_chunks[i::n][:len_chunks] for i in range(n)]
 
-def save_checkpoint(model, optimizer, loss, name, epoch, iteration, checkpoint_dir, cfgs ):
+def save_checkpoint(model, optimizer, loss, name, epoch, checkpoint_dir, cfgs ):
     # Save model checkpoint in subdir corresponding to date of training and model/training params
-    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_{epoch}_{iteration}.pt')
+    filepath = osp.join(checkpoint_dir, f'checkpoint_{name}_epoch_{epoch}.pt')
     save_model = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -40,6 +40,25 @@ def mk_dir_checkpoint(checkpoint_dir, cfgs, type='imgwise' ):
     checkpoint_subdir = osp.join(checkpoint_dir, dt_string, model_string)
     Path(checkpoint_subdir).mkdir(parents=True, exist_ok=True)
     return checkpoint_subdir
+
+def log_loss_and_metrics(writer, loss, metrics, log_steps, iteration, name, train):
+    # ...log the running loss
+    for loss_key in loss.keys():
+        writer.add_scalar(f'{name} loss: {loss_key}', loss[loss_key]/log_steps, iteration)
+        if train:
+            loss[loss_key] = 0.0
+    # ...log the metrics
+    for metr_key in metrics.keys():
+        writer.add_scalar(f'{name} metrics: {metr_key}', metrics[metr_key]/log_steps, iteration)
+        if train: 
+            metrics[metr_key] = 0
+    
+def plotErrors(errors, xrange, save_plot=None):
+    plt.figure(figsize=(8, 5))
+    plt.plot(xrange, errors, color="forestgreen")
+    plt.show()
+    plt.close()
+
 
 class AverageMeter(object):
     def __init__(self):

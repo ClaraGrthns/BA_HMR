@@ -4,23 +4,23 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=full-mem
+#SBATCH --job-name=8-30
 
 #resources:
 
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=8
 # the job can use and see 12 CPUs (from max 24).
 
-#SBATCH --partition=day
+#SBATCH --partition=week
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=19G
+#SBATCH --mem-per-cpu=30G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=5:00:00
+#SBATCH --time=5-00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
@@ -65,10 +65,10 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_fulldata.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/fulldata_valh36m \
+'OUT_DIR' ./checkpoints/fulldata/img_zarr \
 "H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
