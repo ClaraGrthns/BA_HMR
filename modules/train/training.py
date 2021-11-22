@@ -85,7 +85,7 @@ def _loop(
                 log_steps=log_steps, 
                 iteration=epoch * len(loader) + i,
                 name=name,
-                train=train)
+                )
             running_loss= dict.fromkeys(running_loss, 0.)
             running_metrics = dict.fromkeys(running_metrics,0.)
     return epoch_loss, running_loss, running_metrics
@@ -144,7 +144,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                         log_steps=len(loader),
                         iteration=epoch+1, 
                         name=name,
-                        train=False,) 
+                        ) 
                 
     log_loss_and_metrics(writer=writer, 
                         loss=epoch_losses, 
@@ -152,7 +152,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                         log_steps=total_length,
                         iteration=epoch+1, 
                         name='validate on 3dpw & h36m',
-                        train=False,)        
+                        )        
     return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,

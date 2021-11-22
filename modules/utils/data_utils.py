@@ -41,18 +41,14 @@ def mk_dir_checkpoint(checkpoint_dir, cfgs, type='imgwise' ):
     Path(checkpoint_subdir).mkdir(parents=True, exist_ok=True)
     return checkpoint_subdir
 
-def log_loss_and_metrics(writer, loss, metrics, log_steps, iteration, name, train):
+def log_loss_and_metrics(writer, loss, metrics, log_steps, iteration, name):
     # ...log the running loss
     for loss_key in loss.keys():
         writer.add_scalar(f'{name} loss: {loss_key}', loss[loss_key]/log_steps, iteration)
-        if train:
-            loss[loss_key] = 0.0
     # ...log the metrics
     for metr_key in metrics.keys():
         writer.add_scalar(f'{name} metrics: {metr_key}', metrics[metr_key]/log_steps, iteration)
-        if train: 
-            metrics[metr_key] = 0
-    
+
 def plotErrors(errors, xrange, save_plot=None):
     plt.figure(figsize=(8, 5))
     plt.plot(xrange, errors, color="forestgreen")
