@@ -17,6 +17,7 @@ def _loop(
     loader,
     criterion,
     metrics,
+    smpl,
     epoch,
     writer,
     log_steps,
@@ -29,7 +30,6 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0.)
     epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0.)
-    smpl = SMPL().to(device) 
 
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
@@ -86,11 +86,13 @@ def _loop(
                 iteration=epoch * len(loader) + i,
                 name=name,
                 train=train)
+            running_loss= dict.fromkeys(running_loss, 0.)
+            running_metrics = dict.fromkeys(running_metrics,0.)
     return epoch_loss, running_loss, running_metrics
 
 
 
-def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device):
+def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device, smpl):
     epoch_loss,_,_ =  _loop(
         name='train',
         train=True,
@@ -102,11 +104,12 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
         epoch=epoch,
         writer=writer,
         log_steps=log_steps, 
-        device=device,
+        device=device,                            
+        smpl=smpl,           
     )
     return epoch_loss/len(loader_trn)
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, smpl):
     data_sets = ['3dpw', 'h36m']
     epoch_loss = 0
     epoch_losses = dict.fromkeys(criterion.keys(), 0)
@@ -127,6 +130,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                 writer=writer,
                 log_steps=log_steps, 
                 device=device,
+                smpl=smpl,           
             )
             epoch_loss += aux_loss
             for key in epoch_losses.keys():
@@ -137,7 +141,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
             log_loss_and_metrics(writer=writer, 
                         loss=aux_losses, 
                         metrics=aux_metrics, 
-                        log_steps=length(loader),
+                        log_steps=len(loader),
                         iteration=epoch+1, 
                         name=name,
                         train=False,) 
@@ -172,6 +176,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     if batch_size_val is None:
         batch_size_val = batch_size_trn    
     loader_val = [torch.utils.data.DataLoader(dataset=data, batch_size=batch_size_val, shuffle=False,) for data in  data_val]
+    smpl = SMPL().to(device) 
     min_mpve = float('inf') 
     
     for epoch in range(num_epochs):
@@ -183,7 +188,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             epoch=epoch, 
                             writer=writer, 
                             log_steps=log_steps,
-                            device=device,            
+                            device=device, 
+                            smpl=smpl,           
                             ) 
         if epoch % 10 == 0:
             save_checkpoint(model=model, 
@@ -201,7 +207,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             epoch=epoch, 
                             writer=writer, 
                             log_steps=log_steps, 
-                            device=device,                            
+                            device=device,
+                            smpl=smpl,           
                             )
         if mvpe < min_mpve:
             min_mpve = mvpe

@@ -27,10 +27,9 @@ def _loop(
         model.eval()
     
     running_loss = dict.fromkeys(criterion.keys(), 0)
-    epoch_loss = dict.fromkeys(criterion.keys(), 0)
+    epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
-    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
-
+    print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         
         img = batch["img"].to(device)
@@ -77,7 +76,7 @@ def _loop(
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
             running_loss[loss_key] += loss.item()
-            epoch_loss[loss_key] += loss.item()
+            epoch_loss += loss_batch.item()
         
         if train:
             # backward
