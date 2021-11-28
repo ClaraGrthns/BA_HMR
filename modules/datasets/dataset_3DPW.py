@@ -46,7 +46,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             self.sequence_path = osp.join(data_path, 'sequenceFiles', split)
             
         if self.load_from_zarr is not None:
-            self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr)) ### Load array into memory
+            self.imgs = torch.from_numpy(zarr.load(self.load_from_zarr))### Load array into memory
         else:
             self.img_size = img_size
             if self.store_images:

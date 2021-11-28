@@ -22,6 +22,7 @@ def get_data_list_h36m(annot_dir:str,
                     out_dir:str=None,
                     ):
         if load_from_pkl is not None:
+            print('load datalist')
             with open(load_from_pkl , "rb") as fp:
                 datalist = pkl.load(fp)
         else:
@@ -102,6 +103,7 @@ def get_data_list_h36m(annot_dir:str,
                 num_smpl_param += 1
             datalist = sorted(datalist, key=lambda x: x['img_id'])
         if store_as_pkl and out_dir is not None:
+            print('save datalist!')
             sub_str = f'{min(subject_list)}to{max(subject_list)}'
             with open(osp.join(out_dir, f'datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
                 pkl.dump(datalist, fp)
