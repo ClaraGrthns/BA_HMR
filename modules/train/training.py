@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-import os.path as osp
 
 from ..smpl_model._smpl import SMPL, H36M_J17_NAME
 from ..utils.data_utils import save_checkpoint, log_loss_and_metrics

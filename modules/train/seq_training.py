@@ -1,8 +1,6 @@
 import torch
-import numpy as np
 from tqdm import tqdm
-import os.path as osp
-from ..utils.data_utils import save_checkpoint
+from ..utils.data_utils import save_checkpoint, log_loss_and_metrics
 from ..smpl_model._smpl import SMPL, Mesh, H36M_J17_NAME
         
 def _loop(
@@ -31,7 +29,6 @@ def _loop(
     running_metrics = dict.fromkeys(metrics.keys(), 0)
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
-        
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
@@ -87,35 +84,21 @@ def _loop(
         #### Metrics: Mean per vertex error ####
         for metr_key in metrics.keys():
             running_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-            epoch_metrics[metr_key] += metrics[metr_key](preds[metr_key], targets[metr_key])
-        if train: 
-            if i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
-                    # ...log the running loss
-                    # ...log the metrics
-                for loss_key in running_loss.keys():
-                    writer.add_scalar(f'{name} loss: {loss_key}' ,
-                                    running_loss[loss_key]/log_steps,
-                                    epoch * len(loader) + i)
-                    running_loss[loss_key] = 0.0
-
-                for metr_key in running_metrics.keys():
-                    writer.add_scalar(f'{name} metrics: {metr_key}',
-                                    running_metrics[metr_key]/log_steps,
-                                    epoch * len(loader) + i)
-                    running_metrics[metr_key] = 0
-    if not train:
-        for loss_key in epoch_loss.keys():
-            writer.add_scalar(f'{name} loss: {loss_key}' ,
-                            epoch_loss[loss_key]/len(loader),
-                            epoch+1)
-        for metr_key in running_metrics.keys():
-            writer.add_scalar(f'{name} metrics: {metr_key}',
-                            epoch_metrics[metr_key]/len(loader),
-                            epoch+1)
-    return sum(epoch_loss.values())/len(loader), epoch['VERTS']/len(loader)
+       
+        if train and  i % log_steps == log_steps-1:    # every "log_steps" mini-batches...
+            log_loss_and_metrics(writer=writer, 
+                loss=running_loss, 
+                metrics=running_metrics, 
+                log_steps=log_steps, 
+                iteration=epoch*len(loader)+i,
+                name=name,
+                )
+            running_loss= dict.fromkeys(running_loss, 0.)
+            running_metrics = dict.fromkeys(running_metrics,0.)
+    return epoch_loss, running_loss, running_metrics
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device,):
-    return _loop(
+    epoch_loss,_,_ =  _loop(
         name='train',
         train=True,
         model=model,
@@ -130,14 +113,19 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
         log_steps=log_steps, 
         device=device,
     )
+    return epoch_loss/len(loader_trn)
     
 def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
-    sets = ['3dpw', 'h36m']
-    loss_mtr = np.zeros(2,2)
-    for idx, loader in enumerate(loader_val):
+    data_sets = ['3dpw', 'h36m']
+    epoch_loss = 0
+    epoch_losses = dict.fromkeys(criterion.keys(), 0)
+    epoch_metrics = dict.fromkeys(metrics.keys(), 0)
+    total_length = sum([len(loader) for loader in loader_val])
+    for data_set, loader in zip(data_sets, loader_val):
         with torch.no_grad():
-            loss_mtr[idx,:] = _loop(
-                name=f'validate {sets[idx]}',
+            name = f'validate on {data_set}'
+            aux_loss, aux_losses, aux_metrics = _loop(
+                name=name,
                 train=False,
                 model=model,
                 optimizer=None,
@@ -151,11 +139,33 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                 log_steps = log_steps, 
                 device=device,
             )
-    return np.mean(loss_mtr, 0)
+            epoch_loss += aux_loss
+            for key in epoch_losses.keys():
+                epoch_losses[key] += aux_losses[key]
+            for key in epoch_metrics.keys():
+                epoch_metrics[key] += aux_metrics[key] 
 
+            log_loss_and_metrics(writer=writer, 
+                        loss=aux_losses, 
+                        metrics=aux_metrics, 
+                        log_steps=len(loader),
+                        iteration=epoch+1, 
+                        name=name,
+                        ) 
+        log_loss_and_metrics(writer=writer, 
+                        loss=epoch_losses, 
+                        metrics=epoch_metrics, 
+                        log_steps=total_length,
+                        iteration=epoch+1, 
+                        name='validate on 3dpw & h36m',
+                        )        
+    return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
+
+                
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                 batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
-                writer=None, log_steps = 200, device='auto', checkpoint_dir=None, cfgs=None,):
+                writer=None, log_steps = 200, device='auto',
+                checkpoint_dir=None, cfgs=None,):
     
     if device == 'auto':
         if torch.cuda.is_available():
@@ -166,19 +176,6 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     model = model.to(device)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
     
-    loader_trn = torch.utils.data.DataLoader(
-        dataset=data_trn,
-        batch_size=batch_size_trn,
-        shuffle=True,
-    )
-    if batch_size_val is None:
-        batch_size_val = batch_size_trn
-        
-    loader_val = torch.utils.data.DataLoader(
-        dataset=data_val,
-        batch_size=batch_size_val,
-        shuffle=False,
-    )
 
     smpl = SMPL().to(device)
     mesh_sampler = Mesh()
@@ -186,7 +183,19 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     min_mpve = float('inf') 
 
     for epoch in range(num_epochs):
-        loss_trn,_ = trn_loop(model=model, 
+
+        loader_trn = torch.utils.data.DataLoader(
+        dataset=data_trn.set_chunks(),
+        batch_size=batch_size_trn,
+        shuffle=True,
+        )
+        if batch_size_val is None:
+            batch_size_val = batch_size_trn
+            
+        loader_val = [torch.utils.data.DataLoader(dataset=data.set_chunks(), 
+                                        batch_size=batch_size_val, 
+                                        shuffle=False,) for data in data_val]
+        loss_trn = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 
                             criterion=criterion, 
@@ -196,16 +205,17 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             epoch=epoch, 
                             writer=writer, 
                             log_steps=log_steps,
-                            device=device)
-
-        save_checkpoint(model=model, 
-                        optimizer=optimizer,
-                        loss=loss_trn,
-                        name='latest_ckpt', 
-                        epoch=epoch,
-                        iteration=(epoch+1)*len(loader_trn),
-                        checkpoint_dir=checkpoint_dir,
-                        cfgs=cfgs,)
+                            device=device,
+                            )
+        if epoch % 10 == 0:
+            save_checkpoint(model=model, 
+                            optimizer=optimizer,
+                            loss=loss_trn,
+                            name='latest_ckpt', 
+                            epoch=epoch,
+                            checkpoint_dir=checkpoint_dir,
+                            cfgs=cfgs,
+                            )
 
         loss_val, mpve = val_loop(model=model, 
                             loader_val=loader_val,
@@ -225,9 +235,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             loss=loss_val,
                             name='min_val_loss', 
                             epoch=epoch,
-                            iteration=(epoch+1)*len(loader_val),
                             checkpoint_dir=checkpoint_dir,
-                            cfgs=cfgs,)
-
-        
+                            cfgs=cfgs,
+                            )
         print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')

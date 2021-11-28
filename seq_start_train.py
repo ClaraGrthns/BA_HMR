@@ -44,13 +44,12 @@ def main(cfg, cfg_hrnet):
                                               load_chunks_seq_trn=cfg.THREEDPW.LOAD_CHUNKS_SEQ.TRN,
                                               load_chunks_seq_val=cfg.THREEDPW.LOAD_CHUNKS_SEQ.VAL,
                                               )
-    print("length train and val data:", len(train_data), len(val_data))
+
     model = get_model_seq(dim_z_pose = cfg.MODEL.DIM_Z_POSE, dim_z_shape= cfg.MODEL.DIM_Z_SHAPE ,encoder=cfg.MODEL.ENCODER, cfg_hrnet= cfg_hrnet)
-    
     dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     writer.add_graph(model, dummy_input)
 
-    checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet), type='seqwise' )
+    checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet), type='seqwise')
 
     train_model(
         model=model,
