@@ -5,6 +5,7 @@ import zarr
 from PIL import Image
 import numpy as np
 import copy
+import os, psutil
 
 from ..utils.data_utils_h36m import get_data_list_h36m, get_background
 from ..utils.image_utils import to_tensor, transform
@@ -34,15 +35,26 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.mask = mask
         self.store_images = False
         self.subject_list = subject_list
+        print('datasets initialized')
         self.datalist = get_data_list_h36m(annot_dir=self.annot_dir,
                                         subject_list=self.subject_list,
                                         fitting_thr=self.fitting_thr,
                                         load_from_pkl=load_datalist,
                                         store_as_pkl=False,
                                         out_dir=None,) 
+        process = psutil.Process(os.getpid())
+        print('datalist h36m, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
 
         if self.load_from_zarr is not None:
-            self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+            '''imgs = {}
+            for subj, zarr_path in zip(self.subject_list, self.load_from_zarr):
+                print(subj, zarr_path)
+                process = psutil.Process(os.getpid())
+                print('data h36m, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
+                imgs[subj]= torch.from_numpy(zarr.load(zarr_path))
+                print(imgs[subj].device)
+            self.imgs = imgs'''
+            self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
             ### Load array into memory
         else: 
             self.img_size = img_size
@@ -50,7 +62,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 print('test h36m')
                 self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
                 self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
-  
+       
     def __len__(self):
         return len(self.datalist)
 

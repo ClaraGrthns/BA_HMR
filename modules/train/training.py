@@ -31,7 +31,7 @@ def _loop(
     running_metrics = dict.fromkeys(metrics.keys(), 0.)
 
     print(f'start {name} loop!')
-    for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
+    for i, batch in tqdm(enumerate(loader), total = len(loader), desc = f'Epoch {epoch}: {name}-loop'):
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
@@ -174,7 +174,12 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     )
     if batch_size_val is None:
         batch_size_val = batch_size_trn    
+        
     loader_val = [torch.utils.data.DataLoader(dataset=data, batch_size=batch_size_val, shuffle=False,) for data in  data_val]
+    
+    del(data_trn)
+    del(data_val)
+
     smpl = SMPL().to(device) 
     min_mpve = float('inf') 
     

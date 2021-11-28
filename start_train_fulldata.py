@@ -38,7 +38,7 @@ def main(cfg, cfg_hrnet):
     metrics = get_metrics_dict(cfg.METRIC) 
     criterion = get_criterion_dict(cfg.LOSS)
 
-    backgrounds = get_backgrounds_from_folder(osp.join(cfg.DATASETS.H36M, 'backgrounds'))
+    #backgrounds = get_backgrounds_from_folder(osp.join(cfg.DATASETS.H36M, 'backgrounds'))
     load_from_zarr_h36m_trn = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.TRN]
     load_from_zarr_h36m_val = [cfg.H36M.LOAD_FROM_ZARR+f'_{subj}to{subj}subj.zarr' for subj in cfg.H36M.SUBJ_LIST.VAL]
 
@@ -59,7 +59,7 @@ def main(cfg, cfg_hrnet):
         load_from_zarr_h36m_val=load_from_zarr_h36m_val,
         load_datalist_trn=cfg.H36M.LOAD_DATALIST.TRN,
         load_datalist_val=cfg.H36M.LOAD_DATALIST.VAL,
-        backgrounds=backgrounds,
+        backgrounds=None,
         mask=cfg.H36M.MASK,
         store_images_h36m=cfg.H36M.STORE_IMAGES,
         val_on_h36m=cfg.H36M.VAL_ON_H36M,

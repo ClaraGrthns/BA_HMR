@@ -7,6 +7,7 @@ from .dataset_seq_3DPW import get_data as get_data_3dpw_seq
 from .dataset_seq_H36M import get_data as get_data_h36m_seq
 
 from ..smpl_model.smpl_pose2mesh import SMPL
+import os, psutil
 
 class FullDataset(torch.utils.data.Dataset):
     """Combination of Human 3.6M and 3DPW Dataset"""
@@ -73,6 +74,8 @@ def get_full_train_val_data(
                                         img_size=img_size,
                                         load_ids_imgpaths_seq=load_ids_imgpaths_seq_val,
                                         smpl=smpl.layer['neutral'],)
+        process = psutil.Process(os.getpid())
+        print('3dpw loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
     if dataset == 'full' or dataset == 'h36m':
         train_data_h36m = get_data_h36m(data_path=data_path_h36m,
                                 subject_list=subject_list_trn,
@@ -84,6 +87,8 @@ def get_full_train_val_data(
                                 smpl=smpl.layer['neutral'],
                                 store_images=store_images_h36m
                                 )
+        process = psutil.Process(os.getpid())
+        print('h36m train loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
         if val_on_h36m:
             val_data_h36m = get_data_h36m(data_path=data_path_h36m,
                                     subject_list=subject_list_val, 
@@ -95,6 +100,8 @@ def get_full_train_val_data(
                                     smpl=smpl.layer['neutral'],
                                     store_images=store_images_h36m,
                                     )
+            process = psutil.Process(os.getpid())
+            print('h36m valid loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
     print(f'length train data: 3dpw: {len(train_data_3dpw)}, h36m: {len(train_data_h36m)}, total: {len(train_data_3dpw)+len(train_data_h36m)}')
     print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
     train_data = FullDataset(train_data_3dpw, train_data_h36m)
