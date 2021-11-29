@@ -1,6 +1,0 @@
-LOGGING:
-    LOGDIR: "./logging/"   
-LOAD_FROM_ZARR:
-    STORE_IMAGES: False 
-    TRN: "/home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr" 
-    VAL: "/home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr" 

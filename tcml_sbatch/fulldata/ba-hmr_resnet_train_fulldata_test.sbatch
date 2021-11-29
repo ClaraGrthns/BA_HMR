@@ -62,7 +62,7 @@ ls /scratch/$SLURM_JOB_ID/H36M/ -lh
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
+--cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 "H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/H36M/datalist_h36m_thr25_1to1subj_subact1_cam1.pickle \
 "THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \

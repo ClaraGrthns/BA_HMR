@@ -59,7 +59,7 @@ ls /scratch/$SLURM_JOB_ID/H36M/
 ####
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python /home/grotehans/BA_HMR/start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr3dpw_resnet34_ep50.yaml \
+--cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr_resnet34_ep50.yaml \
 --dataset h36m \
 --opts "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
 'OUT_DIR' checkpoints/h36m/ \

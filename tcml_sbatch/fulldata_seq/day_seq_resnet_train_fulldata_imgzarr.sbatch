@@ -4,32 +4,32 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=ba-hmr
+#SBATCH --job-name=d9-26
 
 #resources:
 
-#SBATCH --cpus-per-task=11
+#SBATCH --cpus-per-task=9
 # the job can use and see 12 CPUs (from max 24).
 
-#SBATCH --partition=test
+#SBATCH --partition=day
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=20G
+#SBATCH --mem-per-cpu=26G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=10:00
+#SBATCH --time=24:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
 
 
-#SBATCH --error=jobs/test/job.%J.err
+#SBATCH --error=jobs/train/job.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/test/job.%J.out
+#SBATCH --output=jobs/train/job.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -44,39 +44,39 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 mkdir /scratch/$SLURM_JOB_ID/H36M
-mkdir /scratch/$SLURM_JOB_ID/H36M/img_zarr 
-cp -r /home/grotehans/H36M/img_zarr/imgs_h36m_resnet_thr25_1to1subj.zarr /scratch/$SLURM_JOB_ID/H36M/img_zarr
+cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
-
-cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to1subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle/seq_datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle/seq_datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
 echo copied datapickle!
 
-cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/3DPW/data_pickle/img_seqs_list_paths_seq /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 echo copied zarr img and pickle files!
+
 ls /scratch/$SLURM_JOB_ID/
+du -sh /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 #c) Execute your tensorflow code in a specific singularity container
 #d) Write your checkpoints to your home directory, so that you still have them if your job fails
 ####
-echo executing python file now!
+
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/test_fulldataset_zarr_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/seq_start_train_fulldata.py \
+--cfg /home/grotehans/BA_HMR/configs/experiments/seq_fulldata_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/test \
+'OUT_DIR' ./checkpoints/fulldata/img_zarr_day \
+"H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
+"H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
+"H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
+"THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
+"THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
+"THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
+"THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to1subj.pickle \
-"H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to1subj.pickle \
-"H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID//H36M/img_zarr/imgs_h36m_resnet_thr25 \
-"H36M.SUBJ_LIST.TRN" [1] \
-"H36M.SUBJ_LIST.VAL" [1] \
-"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
-"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
-"LOGGING.LOGDIR" logging/test
+"LOGGING.LOGDIR" logging/seq_fulldata_zarr_resnet34_ep50/day
 
 
 echo DONE!

@@ -8,6 +8,14 @@ THREEDPW:
     LOAD_CHUNKS_SEQ:
         TRN: '../3DPW/data_pickle/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle'
         VAL: '../3DPW/data_pickle/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle'
+H36M: 
+    LOAD_FROM_ZARR: "../H36M/img_zarr/imgs_h36m_resnet_thr25"
+    LOAD_SEQ_DATALIST:
+        TRN: "../H36M/data_pickle/seq_datalist_h36m_thr25_1to8subj.pickle"
+        VAL: "../H36M/data_pickle/seq_datalist_h36m_thr25_9to11subj.pickle"
+    SUBJ_LIST:
+        TRN: [1, 5, 6, 7, 8]
+        VAL: [9, 11]
 TRAIN:
     NUM_EPOCHS: 50
     LEN_CHUNKS: 8 
@@ -24,7 +32,7 @@ LOSS:
     VERTS_SUB2: .25
     VERTS_SUB: .5
 METRIC: 
-    SMPL: 1.
+    SMPL: 0.
     VERTS: 0.
     KP_2D: 0.
     KP_3D: 0.

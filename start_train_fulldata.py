@@ -32,6 +32,7 @@ def main(cfg, cfg_hrnet):
     process = psutil.Process(os.getpid())
     print('start training 1, current memory', process.memory_info().rss/(1024*2024*1024), 'GB')
     pprint.pprint(cfg)
+
     writer = SummaryWriter(cfg.LOGGING.LOGDIR)
     writer.add_text('config', pprint.pformat(cfg), 0) 
 
@@ -68,7 +69,6 @@ def main(cfg, cfg_hrnet):
     )
 
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
-    
     #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     #writer.add_graph(model, dummy_input)
 

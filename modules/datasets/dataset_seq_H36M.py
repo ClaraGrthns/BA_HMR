@@ -68,7 +68,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         chunk = copy.deepcopy(self.chunks[index])
         img_paths = [item['img_name'] for item in chunk]
         zarr_ids = [item['zarr_id'] for item in chunk]
-        ''' if self.load_from_zarr is not None:
+        if self.load_from_zarr is not None:
             subject = chunk[0]['subject']
             zarr_ids = [item['zarr_id'] for item in chunk]
             imgs_tensor = self.imgs[subject][zarr_ids]
@@ -92,7 +92,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             imgs_tensor[idx]=img_tensor
             if self.store_images:
                 self.img_cache[zarr_ids[idx]] = img_tensor
-                self.img_cache_indicator[zarr_ids[idx]] = True'''
+                self.img_cache_indicator[zarr_ids[idx]] = True
     
         poses = torch.empty((0, 72), dtype=torch.float32)
         betas = torch.empty((0, 10), dtype=torch.float32)
@@ -117,7 +117,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         
         data = {}
         data['img_paths'] = img_paths
-        #data['imgs'] = imgs_tensor
+        data['imgs'] = imgs_tensor
         data['betas'] = betas.expand(self.len_chunks, -1)
         data['poses'] = poses
         data['trans'] = transs

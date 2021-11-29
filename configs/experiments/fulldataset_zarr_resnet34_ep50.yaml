@@ -1,5 +1,5 @@
 LOGGING:
-    LOGDIR: "logging/fulldataset_zarr3dpw_resnet34_ep50/"  
+    LOGDIR: "logging/fulldataset_zarr_resnet34_ep50/"  
 TRAIN:
     NUM_EPOCHS: 50
 MODEL: 
