@@ -175,8 +175,6 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
             
     model = model.to(device)
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
-    
-
     smpl = SMPL().to(device)
     mesh_sampler = Mesh()
 
@@ -184,17 +182,17 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
 
     for epoch in range(num_epochs):
 
-        loader_trn = torch.utils.data.DataLoader(
-        dataset = data_trn.set_chunks(),
-        batch_size=batch_size_trn,
-        shuffle=True,
-        )
+        for dataset in data_trn.datasets:
+            dataset = dataset.set_chunks() 
+        loader_trn = torch.utils.data.DataLoader(dataset=data_trn,
+                                            batch_size=batch_size_trn,
+                                            shuffle=True,)
         if batch_size_val is None:
-            batch_size_val = batch_size_trn
-            
+            batch_size_val = batch_size_trn   
         loader_val = [torch.utils.data.DataLoader(dataset=data.set_chunks(), 
                                         batch_size=batch_size_val, 
                                         shuffle=False,) for data in data_val]
+
         loss_trn = trn_loop(model=model, 
                             optimizer=optimizer, 
                             loader_trn=loader_trn, 

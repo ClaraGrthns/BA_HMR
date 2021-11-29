@@ -197,5 +197,5 @@ def get_full_seq_train_val_data(
     print(f'length train data: 3dpw: {len(train_data_3dpw)}, h36m: {len(train_data_h36m)}, total: {len(train_data_3dpw)+len(train_data_h36m)}')
     print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
     train_data = FullDataset(train_data_3dpw, train_data_h36m)
-    val_data = [val_data_3dpw, val_data_h36m]
+    val_data = [dataset for dataset in [val_data_3dpw, val_data_h36m] if len(dataset) != 0]
     return train_data, val_data

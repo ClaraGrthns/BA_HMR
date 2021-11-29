@@ -7,7 +7,7 @@
 *.ipynb_checkpoints
 **/.vscode
 *.zarr
-**test.ipynb
+*.ipynb
 **test.py
 *.pth
 *.err
