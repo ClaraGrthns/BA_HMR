@@ -8,6 +8,7 @@
 **/.vscode
 *.zarr
 **.ipynb
+*.ipynb
 **test.py
 *.pth
 *.err
