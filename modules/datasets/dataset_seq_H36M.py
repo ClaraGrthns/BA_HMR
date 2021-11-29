@@ -6,7 +6,6 @@ import pickle as pkl
 import numpy as np
 from PIL import Image
 import torch
-from torch._C import float32
 import zarr
 import copy
 
@@ -43,7 +42,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
 
         self.subject_list= subject_list
         
-        chunks, seq_datalist = get_data_chunk_list_h36m(annot_dir = self.annot_dir,
+        chunks, seq_datalist = get_data_chunk_list_h36m(annot_dir=self.annot_dir,
                                                         subject_list=self.subject_list,
                                                         fitting_thr=fitting_thr,
                                                         len_chunks=len_chunks,
@@ -55,22 +54,21 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         self.seq_datalist = seq_datalist
         if self.load_from_zarr is not None:
             self.imgs = {subj: torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
-             ### Load array into memory
         else: 
             self.img_size = img_size
             if self.store_images: 
                 dat_length = sum([len(seq_dat) for seq_dat in seq_datalist])
                 self.img_cache_indicator = torch.zeros(dat_length, dtype=torch.bool)
                 self.img_cache = torch.empty(dat_length, 3, img_size, img_size, dtype=torch.float32)
-  
+
     def __len__(self):
         return len(self.chunks)
 
     def __getitem__(self, index):
         chunk = copy.deepcopy(self.chunks[index])
-        img_paths = [osp.join(self.img_dir, item['img_name']) for item in chunk]
+        img_paths = [item['img_name'] for item in chunk]
         zarr_ids = [item['zarr_id'] for item in chunk]
-        if self.load_from_zarr is not None:
+        ''' if self.load_from_zarr is not None:
             subject = chunk[0]['subject']
             zarr_ids = [item['zarr_id'] for item in chunk]
             imgs_tensor = self.imgs[subject][zarr_ids]
@@ -94,31 +92,54 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             imgs_tensor[idx]=img_tensor
             if self.store_images:
                 self.img_cache[zarr_ids[idx]] = img_tensor
-                self.img_cache_indicator[zarr_ids[idx]] = True
+                self.img_cache_indicator[zarr_ids[idx]] = True'''
+    
+        poses = torch.empty((0, 72), dtype=torch.float32)
+        betas = torch.empty((0, 10), dtype=torch.float32)
+        transs = torch.empty((0, 3), dtype=torch.float32)
+        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32)
+
+        cam_poses = torch.empty((0, 4, 4), dtype=torch.float32)
+        cam_intr = torch.FloatTensor(chunk[0]['cam_intr'])
+
+        for item in chunk:
+            poses = torch.cat((poses, item['poses'][None]), 0)
+            betas = torch.cat((betas, item['betas'][None]), 0)
+            transs = torch.cat((transs,item['trans']), 0)
+            cam_poses = torch.cat((cam_poses, item['cam_pose'][None]),0)
+
+        for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
+            verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
+            vertices[idx]= verts
+            poses[idx]=pose
+            transs[idx] = trans
+        betas = torch.mean(betas[betas.nonzero(as_tuple=True)].view(-1, betas.shape[1]), dim=0)
+        
         data = {}
-        data['img_path'] = img_paths
-        data['img'] = imgs_tensor
-        # To-Do:  
-        data['cam_pose'] = item['cam_pose']
-        data['cam_intr'] = item['cam_intr']
- 
-        beta = item['betas']
-        pose = item['poses']
-        trans = item['trans']
-        vertices, trans = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
-        data['betas'] = beta
-        data['poses'] = pose
-        data['trans'] = trans
+        data['img_paths'] = img_paths
+        #data['imgs'] = imgs_tensor
+        data['betas'] = betas.expand(self.len_chunks, -1)
+        data['poses'] = poses
+        data['trans'] = transs
         data['vertices'] = vertices
+        data['cam_pose'] = cam_poses
+        data['cam_intr'] = cam_intr
+
         return data
+   
+    def set_chunks(self):
+        chunks,_ = get_data_chunk_list_h36m(seq_datalist=self.seq_datalist)
+        self.seq_chunks = chunks
 
         
         
 def get_data(data_path,
             subject_list,
             load_from_zarr,
-            load_datalist,
+            load_seq_datalist,
             img_size,
+            len_chunks,
+            fitting_thr,
             mask,
             smpl,
             backgrounds,
@@ -127,10 +148,13 @@ def get_data(data_path,
     return SequenceWiseH36M(data_path=data_path,
                         subject_list=subject_list,
                         load_from_zarr=load_from_zarr,
-                        load_datalist=load_datalist,
+                        load_seq_datalist = load_seq_datalist,
                         img_size=img_size,
                         mask=mask,
+                        fitting_thr=fitting_thr,
                         smpl=smpl,
+                        len_chunks=len_chunks,
                         backgrounds=backgrounds,
                         store_images=store_images
                         )
+   

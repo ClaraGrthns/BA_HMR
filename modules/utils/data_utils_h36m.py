@@ -109,16 +109,15 @@ def get_data_list_h36m(annot_dir:str,
                 pkl.dump(datalist, fp)
         return datalist
 
-def get_data_chunk_list_h36m(annot_dir:str,
-                    img_dir:str,
-                    subject_list:list,
-                    fitting_thr:int,
+def get_data_chunk_list_h36m(annot_dir:str=None,
+                    subject_list:list=None,
+                    fitting_thr:int=25,
                     len_chunks=8,
                     load_seq_datalist:str=None,
                     load_datalist:str=None,
                     store_as_pkl:bool=False,
                     out_dir:str=None,
-                    seq_datalist=None,
+                    seq_datalist:list=None,
                     ):
         if seq_datalist is None:
             if load_seq_datalist is not None:
@@ -137,12 +136,13 @@ def get_data_chunk_list_h36m(annot_dir:str,
                     seq_name = img_name.split('/')[0]
                     seq_name_to_data[seq_name].append(data)
                 seq_datalist = list(seq_name_to_data.values())
-                if store_as_pkl:
-                    sub_str = f'{min(subject_list)}to{max(subject_list)}'
-                    with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
-                        pkl.dump(seq_datalist, fp)
+            if store_as_pkl:
+                sub_str = f'{min(subject_list)}to{max(subject_list)}'
+                with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
+                    pkl.dump(seq_datalist, fp)
         chunks = [chunk for seq in seq_datalist for chunk in rand_partition(seq, len(seq)//len_chunks, len_chunks)]
         return chunks, seq_datalist
+    
 
 def get_background(img_shape, backgrounds):
     height, width,_ = img_shape

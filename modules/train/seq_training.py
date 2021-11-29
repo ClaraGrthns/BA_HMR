@@ -185,7 +185,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     for epoch in range(num_epochs):
 
         loader_trn = torch.utils.data.DataLoader(
-        dataset=data_trn.set_chunks(),
+        dataset = data_trn.set_chunks(),
         batch_size=batch_size_trn,
         shuffle=True,
         )

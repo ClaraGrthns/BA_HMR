@@ -5,7 +5,6 @@ import pickle as pkl
 import numpy as np
 from PIL import Image
 import torch
-from torch._C import float32
 import zarr
 import copy
 
@@ -65,8 +64,6 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         return len(self.seq_chunks)
         
     def __getitem__(self, index):
-        t_start = time.time()
-
         # load sequence
         seq_chunk = self.seq_chunks[index]
         img_paths = [img_path[0] for img_path in seq_chunk]
@@ -81,11 +78,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
             with open(seq_file_name, 'rb') as f:
                 seq = pkl.load(f, encoding='latin1')
         
-        poses2d = torch.tensor(seq['poses2d'][person_id][seq_indices], dtype=torch.float32)    
-        poses3d = torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32) 
-        poses3d = poses3d.view(-1, 24,3)
-        
-    
+        poses2d = torch.tensor(seq['poses2d'][person_id][seq_indices], dtype=torch.float32)            
         img_indices = [chunk[-1] for chunk in seq_chunk]
         if self.load_from_zarr is not None:
             imgs_tensor = self.imgs[img_indices] ### Read array from memory
@@ -103,25 +96,29 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                     self.img_cache[img_indices[idx]] = img_tensor
                     self.img_cache_indicator[img_indices[idx]] = True
         
-        data = {}
-        data['img_path'] = img_paths
-        data['img'] = imgs_tensor
-        data['cam_pose'] = torch.FloatTensor(seq['cam_poses'][seq_indices])  
-        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(self.len_chunks, -1)
+        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1)
         poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
         transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
-        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=float32)
-        for idx, (beta, pose, trans) in enumerate(zip(betas, poses, transs)):
-            verts, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices = torch.zeros(8, 6890, 3, dtype=torch.float32)
+        cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]) 
+
+        for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
+            verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
 
-        data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
+        data = {}
+        data['img_paths'] = img_paths
+        data['imgs'] = imgs_tensor
         data['betas'] = betas
         data['poses'] = poses
         data['trans'] = transs
-        return data   
+        data['vertices']= vertices
+        data['cam_pose'] = cam_poses
+        data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
+
+        return data  
 
     def set_chunks(self):
         chunks,_,_,_ = get_chunks_img_paths_list_seq(img_seqs_list=self.img_seqs_list)
@@ -162,6 +159,7 @@ def get_train_val_data(data_path:str,
     return train_data, val_data
 
 def get_data(data_path:str,
+            smpl,
             num_required_keypoints:int=0,
             len_chunks:int=8,
             store_sequences:bool=True,
@@ -169,7 +167,8 @@ def get_data(data_path:str,
             load_from_zarr:str=None,
             img_size:int=224,
             load_chunks_seq:str=None,
-            split='train'):
+            split:str='split',
+            ):
     return SequenceWise3DPW(data_path=data_path,
                             num_required_keypoints=num_required_keypoints,
                             len_chunks = len_chunks,
@@ -179,4 +178,5 @@ def get_data(data_path:str,
                             load_from_zarr=load_from_zarr,
                             load_chunks_seq=load_chunks_seq,
                             split=split,
+                            smpl=smpl,
                             )

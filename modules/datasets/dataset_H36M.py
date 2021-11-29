@@ -46,14 +46,14 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         print('datalist h36m, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
 
         if self.load_from_zarr is not None:
-            '''imgs = {}
+            imgs = {}
             for subj, zarr_path in zip(self.subject_list, self.load_from_zarr):
                 print(subj, zarr_path)
                 process = psutil.Process(os.getpid())
                 print('data h36m, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
                 imgs[subj]= torch.from_numpy(zarr.load(zarr_path))
                 print(imgs[subj].device)
-            self.imgs = imgs'''
+            self.imgs = imgs
             self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
             ### Load array into memory
         else: 
@@ -96,7 +96,6 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['img'] = img_tensor
         data['cam_pose'] = item['cam_pose']
         data['cam_intr'] = item['cam_intr']
- 
         beta = item['betas']
         pose = item['poses']
         trans = item['trans']

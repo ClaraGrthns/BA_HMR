@@ -48,6 +48,7 @@ def get_full_train_val_data(
         val_on_h36m:bool=False,
         subject_list_trn:list=[],
         subject_list_val:list=[],
+        fitting_thr=25,
     ): 
     print('initialize smpl model')
     smpl = SMPL()
@@ -112,25 +113,27 @@ def get_full_train_val_data(
 def get_full_seq_train_val_data(
         dataset:str='full',
         data_path_3dpw:str='../3DPW',
+        len_chunks=8,
         num_required_keypoints:int = 0,
         store_sequences=True,
         store_images_3dpw=False,
         load_from_zarr_3dpw_trn:str=None,
         load_from_zarr_3dpw_val:str=None,
         img_size=224,
-        load_ids_imgpaths_seq_trn=None,
-        load_ids_imgpaths_seq_val=None,
+        load_chunks_seq_trn=None,
+        load_chunks_seq_val=None,
         data_path_h36m:str='../H36M',
         store_images_h36m=False,
         load_from_zarr_h36m_trn:list=None,
         load_from_zarr_h36m_val:list=None,
-        load_datalist_trn:str=None,
-        load_datalist_val:str=None,
+        load_seq_datalist_trn:str=None,
+        load_seq_datalist_val:str=None,
         backgrounds:list=None,
         mask:bool=True,
         val_on_h36m:bool=False,
         subject_list_trn:list=[],
         subject_list_val:list=[],
+        fitting_thr=25,
     ): 
     print('initialize smpl model')
     smpl = SMPL()
@@ -138,6 +141,7 @@ def get_full_seq_train_val_data(
     smpl.layer['neutral'].th_betas = smpl.layer['neutral'].th_betas[:,:10]
     train_data_3dpw = val_data_3dpw = train_data_h36m = val_data_h36m = []
     if dataset == 'full' or dataset == '3dpw':
+        print('get 3dpw train data')
         train_data_3dpw = get_data_3dpw_seq(data_path=data_path_3dpw, 
                                         split='train',
                                         num_required_keypoints=num_required_keypoints,
@@ -145,9 +149,11 @@ def get_full_seq_train_val_data(
                                         store_images=store_images_3dpw,
                                         load_from_zarr=load_from_zarr_3dpw_trn,
                                         img_size=img_size,
-                                        load_ids_imgpaths_seq=load_ids_imgpaths_seq_trn,
-                                        smpl=smpl.layer['neutral'],)
-                                        
+                                        load_chunks_seq=load_chunks_seq_trn,
+                                        smpl=smpl.layer['neutral'],
+                                        len_chunks=len_chunks,
+                                        )
+        print('get 3dpw validation data')    
         val_data_3dpw = get_data_3dpw_seq(data_path=data_path_3dpw, 
                                         split='validation',
                                         num_required_keypoints=num_required_keypoints,
@@ -155,30 +161,39 @@ def get_full_seq_train_val_data(
                                         store_images=store_images_3dpw,
                                         load_from_zarr=load_from_zarr_3dpw_val,
                                         img_size=img_size,
-                                        load_ids_imgpaths_seq=load_ids_imgpaths_seq_val,
-                                        smpl=smpl.layer['neutral'],)
+                                        load_chunks_seq=load_chunks_seq_val,
+                                        smpl=smpl.layer['neutral'],
+                                        len_chunks=len_chunks,
+                                        )
     if dataset == 'full' or dataset == 'h36m':
+        print('get h36m train data')    
         train_data_h36m = get_data_h36m_seq(data_path=data_path_h36m,
-                                subject_list=subject_list_trn,
-                                load_from_zarr=load_from_zarr_h36m_trn,
-                                load_datalist=load_datalist_trn,
+                            subject_list=subject_list_trn,
+                            load_from_zarr=load_from_zarr_h36m_trn,
+                            load_seq_datalist = load_seq_datalist_trn,
+                            img_size=img_size,
+                            mask=mask,
+                            fitting_thr=fitting_thr,
+                            smpl=smpl.layer['neutral'],
+                            len_chunks=len_chunks,
+                            backgrounds=backgrounds,
+                            store_images=store_images_h36m,
+                            )
+        if val_on_h36m:
+            print('get h36m validation data')    
+            val_data_h36m = get_data_h36m_seq(data_path=data_path_h36m,
+                                subject_list=subject_list_val,
+                                load_from_zarr=load_from_zarr_h36m_val,
+                                load_seq_datalist = load_seq_datalist_val,
                                 img_size=img_size,
                                 mask=mask,
-                                backgrounds=backgrounds,
+                                fitting_thr=fitting_thr,
                                 smpl=smpl.layer['neutral'],
+                                len_chunks=len_chunks,
+                                backgrounds=backgrounds,
                                 store_images=store_images_h36m
                                 )
-        if val_on_h36m:
-            val_data_h36m = get_data_h36m_seq(data_path=data_path_h36m,
-                                    subject_list=subject_list_val, 
-                                    load_from_zarr=load_from_zarr_h36m_val,
-                                    load_datalist=load_datalist_val,
-                                    img_size=img_size,
-                                    mask=mask,
-                                    backgrounds=backgrounds,
-                                    smpl=smpl.layer['neutral'],
-                                    store_images=store_images_h36m,
-                                    )
+
     print(f'length train data: 3dpw: {len(train_data_3dpw)}, h36m: {len(train_data_h36m)}, total: {len(train_data_3dpw)+len(train_data_h36m)}')
     print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
     train_data = FullDataset(train_data_3dpw, train_data_h36m)
