@@ -55,6 +55,7 @@ def get_full_train_val_data(
     smpl.layer['neutral'].th_shapedirs = smpl.layer['neutral'].th_shapedirs[:,:,:10]
     smpl.layer['neutral'].th_betas = smpl.layer['neutral'].th_betas[:,:10]
     train_data_3dpw = val_data_3dpw = train_data_h36m = val_data_h36m = []
+
     if dataset == 'full' or dataset == '3dpw':
         train_data_3dpw = get_data_3dpw(data_path=data_path_3dpw, 
                                         split='train',
@@ -90,7 +91,7 @@ def get_full_train_val_data(
                                 )
         process = psutil.Process(os.getpid())
         print('h36m train loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
-        if val_on_h36m:
+        if val_on_h36m or dataset == 'h36m':
             val_data_h36m = get_data_h36m(data_path=data_path_h36m,
                                     subject_list=subject_list_val, 
                                     load_from_zarr=load_from_zarr_h36m_val,
@@ -103,10 +104,13 @@ def get_full_train_val_data(
                                     )
             process = psutil.Process(os.getpid())
             print('h36m valid loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
+
+    train_data = FullDataset(train_data_3dpw, train_data_h36m)
+    val_data = [dataset for dataset in [val_data_3dpw, val_data_h36m] if len(dataset) != 0]
+
     print(f'length train data: 3dpw: {len(train_data_3dpw)}, h36m: {len(train_data_h36m)}, total: {len(train_data_3dpw)+len(train_data_h36m)}')
     print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
-    train_data = FullDataset(train_data_3dpw, train_data_h36m)
-    val_data = [val_data_3dpw, val_data_h36m]
+
     return train_data, val_data
 
 

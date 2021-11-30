@@ -1,6 +1,6 @@
 from yacs.config import CfgNode as CN
-DEFAULT_YAML_PATH = "../HMR_3DWP/configs/experiments/default_config.yaml"
-#DEFAULT_YAML_PATH = "/home/grotehans/BA_HMR/configs/experiments/default_config.yaml"
+DEFAULT_YAML_PATH = "/home/grotehans/BA_HMR/configs/experiments/default_config.yaml"
+DEFAULT_YAML_PATH = "configs/experiments/default_config.yaml"
 # Configuration variables
 cfg = CN(new_allowed=True)
 

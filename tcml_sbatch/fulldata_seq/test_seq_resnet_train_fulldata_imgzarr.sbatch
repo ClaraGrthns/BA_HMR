@@ -14,7 +14,7 @@
 #SBATCH --partition=test
 # the slurm partition the job is queued to.
 
-#SBATCH --mem-per-cpu=26G
+#SBATCH --mem-per-cpu=15G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
 #SBATCH --gres=gpu:1

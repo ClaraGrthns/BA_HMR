@@ -27,12 +27,13 @@ def _loop(
     running_loss = dict.fromkeys(criterion.keys(), 0)
     epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0)
+
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
-        img = batch["img"].to(device)
+        img = batch["imgs"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
-        verts_gt_full = batch['vertices'].to(device)
+        verts_full_gt = batch["vertices"].to(device)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -43,20 +44,20 @@ def _loop(
         # --> dim verts: (bs*seqlen)x|V|x3
         
         # Create Groundtruth-Mesh and downsample it
-        verts_gt_sub = mesh_sampler.downsample(verts_gt_full)
-        verts_gt_sub2 = mesh_sampler.downsample(verts_gt_full, n1=0, n2=2)
+        verts_sub_gt = mesh_sampler.downsample(verts_full_gt)
+        verts_sub2_gt = mesh_sampler.downsample(verts_full_gt, n1=0, n2=2)
 
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
-        joints3d_gt = smpl.get_h36m_joints(verts_gt_full)
+        joints3d_gt = smpl.get_h36m_joints(verts_full_gt)
         joints3d_pred = smpl.get_h36m_joints(verts_full_pred)
         pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
 
         #Normalize Groundtruth
-        verts_gt_sub2 = verts_gt_sub2 - pelvis_gt[:, None, :]
-        verts_gt_sub = verts_gt_sub - pelvis_gt[:, None, :]
-        verts_gt_full = verts_gt_full - pelvis_gt[:, None, :]
+        verts_sub2_gt = verts_sub2_gt - pelvis_gt[:, None, :]
+        verts_sub_gt = verts_sub_gt - pelvis_gt[:, None, :]
+        verts_full_gt = verts_full_gt - pelvis_gt[:, None, :]
 
         #Normalize Prediction
         verts_sub2_pred = verts_sub2_pred - pelvis_pred[:, None, :]
@@ -65,7 +66,7 @@ def _loop(
         
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_gt_sub2, "VERTS_SUB": verts_gt_sub, "VERTS_FULL": verts_gt_full}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
@@ -94,7 +95,7 @@ def _loop(
                 name=name,
                 )
             running_loss= dict.fromkeys(running_loss, 0.)
-            running_metrics = dict.fromkeys(running_metrics,0.)
+            running_metrics = dict.fromkeys(running_metrics, 0.)
     return epoch_loss, running_loss, running_metrics
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device,):
@@ -116,14 +117,14 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
     return epoch_loss/len(loader_trn)
     
 def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
-    data_sets = ['3dpw', 'h36m']
+    #data_sets = ['3dpw', 'h36m']
     epoch_loss = 0
     epoch_losses = dict.fromkeys(criterion.keys(), 0)
     epoch_metrics = dict.fromkeys(metrics.keys(), 0)
     total_length = sum([len(loader) for loader in loader_val])
-    for data_set, loader in zip(data_sets, loader_val):
+    for loader in loader_val:
         with torch.no_grad():
-            name = f'validate on {data_set}'
+            name = f'validate on {loader}'
             aux_loss, aux_losses, aux_metrics = _loop(
                 name=name,
                 train=False,

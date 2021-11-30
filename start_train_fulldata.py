@@ -45,7 +45,7 @@ def main(cfg, cfg_hrnet):
 
 
     train_data, val_data = get_full_train_val_data(
-        dataset= cfg.DATASET_OPT,
+        dataset=cfg.DATASET_OPT,
         data_path_3dpw= cfg.DATASETS.THREEDPW,
         num_required_keypoints = cfg.TRAIN.NUM_REQUIRED_KPS,
         store_sequences=cfg.THREEDPW.STORE_SEQUENCES,

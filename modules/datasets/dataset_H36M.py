@@ -59,7 +59,6 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         else: 
             self.img_size = img_size
             if self.store_images: 
-                print('test h36m')
                 self.img_cache_indicator = torch.zeros(self.__len__(), dtype=torch.bool)
                 self.img_cache = torch.empty(self.__len__(), 3, img_size, img_size, dtype=torch.float32)
        
