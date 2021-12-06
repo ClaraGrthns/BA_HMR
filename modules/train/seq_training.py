@@ -33,6 +33,7 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         verts_gt_full = batch['vertices'].to(device)
+        print(verts_gt_full.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -49,7 +50,9 @@ def _loop(
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_gt = smpl.get_h36m_joints(verts_gt_full)
+        print(joints3d_gt.shape)
         joints3d_pred = smpl.get_h36m_joints(verts_full_pred)
+
         pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
 

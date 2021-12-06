@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-from ..smpl_model._smpl import SMPL, H36M_J17_NAME
+from ..smpl_model._smpl import SMPL, H36M_J17_NAME, H36M_J17_TO_J14
 from ..utils.data_utils import save_checkpoint, log_loss_and_metrics
 
 
@@ -55,9 +55,12 @@ def _loop(
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
-        # List of Preds and Targets for smpl-params, vertices, (2d-keypoints and 3d-keypoints)
-        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt}
+        joints3d_pred = joints3d_pred[:,H36M_J17_TO_J14,:]
+        joints3d_gt = joints3d_gt[:,H36M_J17_TO_J14,:]
+
+        # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
+        preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_gt}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_pred}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0

@@ -100,6 +100,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
         transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
         vertices = torch.zeros(8, 6890, 3, dtype=torch.float32)
+
         cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]) 
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
