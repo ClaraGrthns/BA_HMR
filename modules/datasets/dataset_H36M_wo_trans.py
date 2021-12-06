@@ -54,7 +54,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 imgs[subj]= torch.from_numpy(zarr.load(zarr_path))
                 print(imgs[subj].device)
             self.imgs = imgs
-            self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+            #self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
             ### Load array into memory
         else: 
             self.img_size = img_size
@@ -95,14 +95,15 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['img'] = img_tensor
         data['cam_pose'] = item['cam_pose']
         data['cam_intr'] = item['cam_intr']
+        
         beta = item['betas']
         pose = item['poses']
-        trans = item['trans']
-        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        verts, joints = self.smpl(pose.reshape(1,-1), beta.reshape(1,-1))
+
         data['betas'] = beta
         data['poses'] = pose
-        data['trans'] = trans
-        data['vertices'] = vertices
+        data['trans'] = item['trans'].reshape(3)
+        data['vertices'] = verts.reshape(-1, 3)
         return data
 
         

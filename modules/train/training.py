@@ -26,6 +26,7 @@ def _loop(
         model.train() 
     else:
         model.eval()
+
     running_loss = dict.fromkeys(criterion.keys(), 0.)
     epoch_loss = 0
     running_metrics = dict.fromkeys(metrics.keys(), 0.)
@@ -35,7 +36,7 @@ def _loop(
         img = batch["img"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
-        vertices_gt = batch['vertices'].to(device)
+        vertices_gt = batch["vertices"].to(device)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -67,9 +68,9 @@ def _loop(
         for loss_key in criterion.keys():
             loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
             loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
-            epoch_loss += loss_batch.item()
             running_loss[loss_key] += loss.item()
-        
+            epoch_loss += loss_batch.item()
+
         if train:
             # backward
             loss_batch.backward()
@@ -85,11 +86,11 @@ def _loop(
                 loss=running_loss, 
                 metrics=running_metrics, 
                 log_steps=log_steps, 
-                iteration=epoch * len(loader) + i,
+                iteration=epoch*len(loader)+i,
                 name=name,
                 )
             running_loss= dict.fromkeys(running_loss, 0.)
-            running_metrics = dict.fromkeys(running_metrics,0.)
+            running_metrics = dict.fromkeys(running_metrics, 0.)
     return epoch_loss, running_loss, running_metrics
 
 

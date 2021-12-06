@@ -15,9 +15,15 @@ THREEDPW:
     LOAD_IDS_IMGPATHS_SEQ: 
         TRN: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle"
         VAL: "/home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle"
+    LOAD_CHUNKS_SEQ:
+        TRN:
+        VAL:
 H36M: 
     LOAD_FROM_ZARR: 
     LOAD_DATALIST:
+        TRN:
+        VAL:
+    LOAD_SEQ_DATALIST:
         TRN:
         VAL:
     SUBJ_LIST:

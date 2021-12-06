@@ -9,7 +9,7 @@ from modules.utils.data_utils import mk_dir_checkpoint
 from modules.models import get_model
 from modules.train.training import train_model
 from modules.losses_metrics import get_criterion_dict, get_metrics_dict
-from modules.datasets.FullDataset import get_full_train_val_data
+from modules.datasets.FullDataset import get_full_train_val_data_wo_trans as get_full_train_val_data
 from modules.utils.data_utils_h36m import get_backgrounds_from_folder
 from configs.config import update_cfg
 from hrnet_model_imgnet.config.default import update_hrnet_cfg

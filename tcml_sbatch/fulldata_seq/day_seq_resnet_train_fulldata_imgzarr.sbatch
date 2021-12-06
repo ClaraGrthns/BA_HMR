@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=d9-26
+#SBATCH --job-name=seqd
 
 #resources:
 
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/train/job.%J.err
+#SBATCH --error=jobs/seq/train/seqd.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/train/job.%J.out
+#SBATCH --output=jobs/seq/train/seqd.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -64,10 +64,10 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/seq_start_train_fulldata.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/seq_fulldata_zarr_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata.py \
+--cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/fulldata/img_zarr_day \
+'OUT_DIR' ./checkpoints/seq_fulldata/day \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
