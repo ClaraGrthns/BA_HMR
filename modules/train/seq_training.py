@@ -34,6 +34,8 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         verts_full_gt = batch["vertices"].to(device)
+        verts_full_gt = verts_full_gt.reshape(-1, verts_full_gt.shape[-2], verts_full_gt.shape[-1])
+
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -117,14 +119,14 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
     return epoch_loss/len(loader_trn)
     
 def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
-    #data_sets = ['3dpw', 'h36m']
+    datasets = ['3dpw', 'h36m']
     epoch_loss = 0
     epoch_losses = dict.fromkeys(criterion.keys(), 0)
     epoch_metrics = dict.fromkeys(metrics.keys(), 0)
     total_length = sum([len(loader) for loader in loader_val])
-    for loader in loader_val:
+    for dataset, loader in zip(datasets, loader_val):
         with torch.no_grad():
-            name = f'validate on {loader}'
+            name = f'validate on {dataset}'
             aux_loss, aux_losses, aux_metrics = _loop(
                 name=name,
                 train=False,
@@ -158,9 +160,9 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                         metrics=epoch_metrics, 
                         log_steps=total_length,
                         iteration=epoch+1, 
-                        name='validate on 3dpw & h36m',
+                        name=f'validate on {datasets}',
                         )        
-    return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
+    return epoch_loss/total_length, epoch_metrics['VERTS_FULL']/total_length
 
                 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
@@ -184,13 +186,15 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
     for epoch in range(num_epochs):
 
         for dataset in data_trn.datasets:
-            dataset = dataset.set_chunks() 
+            dataset.set_chunks()   
         loader_trn = torch.utils.data.DataLoader(dataset=data_trn,
                                             batch_size=batch_size_trn,
                                             shuffle=True,)
         if batch_size_val is None:
-            batch_size_val = batch_size_trn   
-        loader_val = [torch.utils.data.DataLoader(dataset=data.set_chunks(), 
+            batch_size_val = batch_size_trn  
+        for dataset in data_val:
+            dataset.set_chunks()
+        loader_val = [torch.utils.data.DataLoader(dataset=data, 
                                         batch_size=batch_size_val, 
                                         shuffle=False,) for data in data_val]
 
@@ -237,4 +241,4 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,
                             )
-        print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
+        #print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
