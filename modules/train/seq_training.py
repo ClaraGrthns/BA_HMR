@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 from ..utils.data_utils import save_checkpoint, log_loss_and_metrics
-from ..smpl_model._smpl import SMPL, Mesh, H36M_J17_NAME
+from ..smpl_model._smpl import SMPL, Mesh, H36M_J17_NAME, H36M_J17_TO_J14
         
 def _loop(
     name,
@@ -66,10 +66,13 @@ def _loop(
         verts_sub2_pred = verts_sub2_pred - pelvis_pred[:, None, :]
         verts_sub_pred = verts_sub_pred - pelvis_pred[:, None, :]
         verts_full_pred = verts_full_pred - pelvis_pred[:, None, :]
+
+        joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
+        joints3d_gt = joints3d_gt[:, H36M_J17_TO_J14,:]
         
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
-        preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt}
+        preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred, "KP_3D": joints3d_pred}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt, "KP_3D": joints3d_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0

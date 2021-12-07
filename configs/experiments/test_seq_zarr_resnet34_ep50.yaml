@@ -27,7 +27,7 @@ LOSS:
     SMPL: 0.
     VERTS: 0.
     KP_2D: 0.
-    KP_3D: 0.
+    KP_3D: 0.5
     VERTS_FULL: 1.
     VERTS_SUB2: .25
     VERTS_SUB: .5

@@ -39,13 +39,13 @@ def criterion_kp_2d(kp_2d_pred, kp_2d_gt):
 
 def criterion_kp_3d(kp_3d_pred, kp_3d_gt):
     #Input kp_3d_pred, kp_3d_gt: torch.Tensor([Bx14x3])
-    criterion_keypoints3d = torch.nn.functional.mse_loss.to(torch.device("cpu"))
+    #criterion_keypoints3d = torch.nn.functional.mse_loss()
     if len(kp_3d_gt) > 0:
         pelvis_gt = (kp_3d_gt[:, 2,:] + kp_3d_gt[:, 3,:]) / 2
         kp_3d_gt = kp_3d_gt - pelvis_gt[:, None, :]
         pelvis_pred = (kp_3d_pred[:, 2,:] + kp_3d_pred[:, 3,:]) / 2
         kp_3d_pred = kp_3d_pred - pelvis_pred[:, None, :]
-        return criterion_keypoints3d(kp_3d_pred, kp_3d_gt)
+        return torch.nn.functional.mse_loss(kp_3d_pred, kp_3d_gt)
     else:
         return torch.FloatTensor(1).fill_(0.).to(torch.device("cpu")) 
 
