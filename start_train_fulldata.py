@@ -69,8 +69,8 @@ def main(cfg, cfg_hrnet):
     )
 
     model = get_model(cfg.MODEL.DIM_Z, cfg.MODEL.ENCODER, cfg_hrnet)
-    #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
-    #writer.add_graph(model, dummy_input)
+    dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
+    writer.add_graph(model, dummy_input)
 
     checkpoint_dir = mk_dir_checkpoint(cfg.OUT_DIR, (cfg, cfg_hrnet) )
     process = psutil.Process(os.getpid())

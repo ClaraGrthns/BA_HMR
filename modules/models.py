@@ -1,3 +1,4 @@
+from os import dup
 import torch
 from torch._C import dtype
 import torchvision.models as models
@@ -44,7 +45,6 @@ def get_encoder(encoder:str, cfg_hrnet):
     else: 
         return get_cls_net(cfg_hrnet)
 
-
 def get_model(dim_z, encoder, cfg_hrnet):
     encoder_pretrained = get_encoder(encoder, cfg_hrnet)
     model = PoseNetXtreme(
@@ -54,6 +54,38 @@ def get_model(dim_z, encoder, cfg_hrnet):
     )
     return model
 
+class PoseSeqNetXtreme2(torch.nn.Module):
+    def __init__(self, encoder, decoder, shape_pose_encoder, dim_z=128):
+        super(PoseSeqNetXtreme2, self).__init__()
+        self.encoder = encoder
+        self.dim_z = dim_z
+        self.linear = torch.nn.Linear(1000, self.dim_z)
+        self.shape_pose_encoder = shape_pose_encoder
+        self.decoder = decoder
+        
+    def forward(self, images):
+        batch_size = images.shape[0]
+        img_size = images.shape[-2:]
+        seq_len = images.shape[1]
+        images = images.view(batch_size*seq_len, 3,img_size[0],img_size[1])
+        features = self.linear(torch.nn.functional.relu(self.encoder(images)))
+        betas, poses = self.shape_pose_encoder(features)
+        betas = betas.view(batch_size, seq_len, -1) 
+        poses = poses.view(batch_size, seq_len, -1) 
+        betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
+        z = torch.cat((betas, poses), dim=-1)
+        verts_sub2, verts_sub, verts_full = self.decoder(z)
+        return betas, poses, verts_sub2.reshape(-1, 431, 3), verts_sub.reshape(-1, 1723, 3), verts_full.reshape(-1, 6890,3)
+
+def get_model_seq2(dim_z, dim_z_pose , dim_z_shape,  encoder, cfg_hrnet):
+    encoder_pretrained = get_encoder(encoder, cfg_hrnet)
+    model = PoseSeqNetXtreme2(
+        encoder=encoder_pretrained,
+        shape_pose_encoder=PoseDecoder(dim_z, dim_z, dim_z),
+        decoder=PoseSeqDecoder(dim_z_pose+dim_z_shape),
+        dim_z=dim_z
+    )
+    return model
 
 class PoseSeqNetXtreme(torch.nn.Module):
     def __init__(self, encoder, decoder, dim_z_shape=10, dim_z_pose=72):
