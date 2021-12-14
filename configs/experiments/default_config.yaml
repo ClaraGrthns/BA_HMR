@@ -42,6 +42,7 @@ TRAIN:
     LEARNING_RATE: 1.0e-4
     NUM_REQUIRED_KPS: 8
     LEN_CHUNKS: 1
+    SCALE: False
 MODEL: 
     DIM_Z: 128
     DIM_Z_POSE: 72

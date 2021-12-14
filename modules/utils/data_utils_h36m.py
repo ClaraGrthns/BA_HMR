@@ -12,7 +12,7 @@ import random
 from ..smpl_model.config_smpl import *
 from ..smpl_model.smpl_pose2mesh import SMPL
 from .data_utils import rand_partition
-
+from .geometry import world2cam
 
 def get_data_list_h36m(annot_dir:str,
                     subject_list:list,
@@ -75,8 +75,6 @@ def get_data_list_h36m(annot_dir:str,
                     continue
                     
                 cam_id = img['cam_idx']
-                if action !=4 or cam_id != 1 or subaction !=1:
-                    continue
                 cam_param = cameras[str(subject)][str(cam_id)]
                 cam_pose, cam_intr = torch.FloatTensor(cam_param['cam_pose']), torch.FloatTensor(cam_param['cam_intr'])
                 
@@ -84,7 +82,12 @@ def get_data_list_h36m(annot_dir:str,
                 pose = torch.FloatTensor(smpl_param['pose'])
                 trans = torch.FloatTensor(smpl_param['trans']) 
                 ### World coordinate --> Camera coordinate
-                
+                joint3d_h36m_pelvis = joint3d_h36m_gt[H36M_J17_NAME.index('Pelvis'),:]
+                joint3d_h36m_gt = joint3d_h36m_gt - joint3d_h36m_pelvis[None,:]
+                joint3d_h36m_gt = joint3d_h36m_gt[H36M_J17_TO_J14, :]
+
+                joint3d_h36m_gt = torch.FloatTensor(world2cam(joint3d_h36m_gt, cam_pose))
+
                 bbox = bboxes[str(img_id)]
                 datalist.append({
                     'img_name': img_name,
@@ -98,8 +101,8 @@ def get_data_list_h36m(annot_dir:str,
                     'subject': subject,
                     'cam_pose': cam_pose,
                     'cam_intr': cam_intr,
+                    'joints_3d': joint3d_h36m_gt,
                     })
-                
                 num_smpl_param += 1
             datalist = sorted(datalist, key=lambda x: x['img_id'])
         if store_as_pkl and out_dir is not None:

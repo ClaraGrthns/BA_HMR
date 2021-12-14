@@ -89,6 +89,7 @@ def main(cfg, cfg_hrnet):
         writer=writer,
         log_steps = cfg.LOGGING.LOG_STEPS,
         checkpoint_dir=checkpoint_dir,
+        scale=cfg.TRAIN.SCALE,
         cfgs=(cfg, cfg_hrnet),
     )
     
