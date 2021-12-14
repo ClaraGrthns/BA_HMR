@@ -20,6 +20,13 @@ from torch.nn import functional as F
 import transforms3d
 import math
 
+def world2cam(world_coord, cam_pose):
+    world_coord = np.array(world_coord)
+    R = np.array(cam_pose[:3, :3], dtype=np.float32).reshape(3, 3)
+    t = np.array(cam_pose[0:3,3], dtype=np.float32).reshape(3)
+    cam_coord = np.dot(R, world_coord.transpose(1,0)).transpose(1,0) + t.reshape(1,3)
+    return cam_coord
+
 def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
         pose = pose.view(-1, 3)
@@ -83,7 +90,6 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         # get mesh and joint coordinates
         smpl_mesh_coord, smpl_joint_coord = smpl(pose, beta)
 
-        # incorporate face keypoints
         smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord).reshape(-1, 3)
         smpl_joint_coord = torch.FloatTensor(smpl_joint_coord).reshape(-1, 3)
         # compenstate rotation (translation from origin to root joint was not cancled)

@@ -10,7 +10,7 @@ import os, psutil
 from ..utils.data_utils_h36m import get_data_list_h36m, get_background
 from ..utils.image_utils import to_tensor, transform
 from ..smpl_model.smpl_pose2mesh import SMPL
-from ..utils.geometry import get_smpl_coord
+from ..utils.geometry import get_smpl_coord, world2cam
 
 class ImageWiseH36M(torch.utils.data.Dataset):
     def __init__(self,
@@ -42,6 +42,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                                         load_from_pkl=load_datalist,
                                         store_as_pkl=False,
                                         out_dir=None,) 
+        for data in self.datalist:
+            data['joints_3d'] = world2cam(data['joints_3d'], data['cam_pose'])
         process = psutil.Process(os.getpid())
         print('datalist h36m, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
 
@@ -103,6 +105,9 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
+        data['joints_3d'] = item['joints_3d']
+        print('h36m', data['joints_3d'].shape)
+
         return data
 
         

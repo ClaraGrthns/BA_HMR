@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-from ..smpl_model._smpl import SMPL, H36M_J17_NAME, H36M_J17_TO_J14
+from ..smpl_model._smpl import SMPL, H36M_J17_NAME, H36M_J17_TO_J14, J24_NAME, J24_TO_J14
 from ..utils.data_utils import save_checkpoint, log_loss_and_metrics
 
 
@@ -21,6 +21,7 @@ def _loop(
     writer,
     log_steps,
     device,
+    scale=False,
 ):
     if train:
         model.train() 
@@ -37,6 +38,8 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch["vertices"].to(device)
+        joints3d_gt = batch["joints_3d"].to(device) # Bx14x3
+        print(joints3d_gt.shape)
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -49,19 +52,38 @@ def _loop(
         vertices_pred = smpl(beta=betas_pred, pose=poses_pred)
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
-        joints3d_gt = smpl.get_h36m_joints(vertices_gt)
+        joints3d_smpl_gt = smpl.get_h36m_joints(vertices_gt)
         joints3d_pred = smpl.get_h36m_joints(vertices_pred)
-        pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
+        pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
+        torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
+        torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
+
+        # normalize vertices 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
-        
-        joints3d_pred = joints3d_pred[:,H36M_J17_TO_J14,:]
-        joints3d_gt = joints3d_gt[:,H36M_J17_TO_J14,:]
+        # normalize predicted joints (gt joints are already normalized with pelvis)
+        joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
+        joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
+
+        if scale:
+            scale_smpl_gt = torch.torch.linalg.vector_norm((torso_gt-pelvis_gt), dim=-1, keepdim=True)[:, None, :]
+            scale_pred = torch.torch.linalg.vector_norm((torso_pred-pelvis_pred), dim=-1, keepdim=True)[:, None, :]            
+            vertices_gt = vertices_gt/scale_smpl_gt
+            vertices_pred = vertices_pred/scale_pred
+
+            # Scale Joints with Left and Right Hip
+            scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            joints3d_pred = joints3d_pred/scale_pred
+            joints3d_gt = joints3d_gt/scale_gt
+
 
         # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_gt}
+        
+        print('kps', joints3d_pred.shape, joints3d_gt.shape )
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
@@ -95,7 +117,7 @@ def _loop(
 
 
 
-def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device, smpl):
+def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device, smpl, scale):
     epoch_loss,_,_ =  _loop(
         name='train',
         train=True,
@@ -108,11 +130,12 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log
         writer=writer,
         log_steps=log_steps, 
         device=device,                            
-        smpl=smpl,           
+        smpl=smpl, 
+        scale=scale,          
     )
     return epoch_loss/len(loader_trn)
     
-def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, smpl):
+def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, device, smpl, scale):
     data_sets = ['3dpw', 'h36m']
     epoch_loss = 0
     epoch_losses = dict.fromkeys(criterion.keys(), 0)
@@ -133,7 +156,8 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                 writer=writer,
                 log_steps=log_steps, 
                 device=device,
-                smpl=smpl,           
+                smpl=smpl,  
+                scale=scale,         
             )
             epoch_loss += aux_loss
             for key in epoch_losses.keys():
@@ -160,7 +184,7 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                 batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
-                writer=None, log_steps = 200, device='auto', checkpoint_dir=None, cfgs=None,):
+                writer=None, log_steps = 200, device='auto', checkpoint_dir=None, scale=False, cfgs=None,):
     
     if device == 'auto':
         if torch.cuda.is_available():
@@ -197,7 +221,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps,
                             device=device, 
-                            smpl=smpl,           
+                            smpl=smpl, 
+                            scale=scale,          
                             ) 
         if epoch % 10 == 0:
             save_checkpoint(model=model, 
@@ -216,7 +241,8 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps, 
                             device=device,
-                            smpl=smpl,           
+                            smpl=smpl, 
+                            scale=scale,                
                             )
         if mvpe < min_mpve:
             min_mpve = mvpe
