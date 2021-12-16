@@ -11,8 +11,8 @@ import copy
 
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from ..utils.data_utils_3dpw import get_chunks_img_paths_list_seq
-from ..utils.geometry import get_smpl_coord
-
+from ..utils.geometry import get_smpl_coord, world2cam
+from ..smpl_model.config_smpl import *
 
 class SequenceWise3DPW(torch.utils.data.Dataset):
     def __init__(
@@ -78,7 +78,9 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
             with open(seq_file_name, 'rb') as f:
                 seq = pkl.load(f, encoding='latin1')
         
-        poses2d = torch.tensor(seq['poses2d'][person_id][seq_indices], dtype=torch.float32)            
+        poses2d = torch.tensor(seq['poses2d'][person_id][seq_indices], dtype=torch.float32)  
+        
+
         img_indices = [chunk[-1] for chunk in seq_chunk]
         if self.load_from_zarr is not None:
             imgs_tensor = self.imgs[img_indices] ### Read array from memory
@@ -95,7 +97,8 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                 if self.store_images:
                     self.img_cache[img_indices[idx]] = img_tensor
                     self.img_cache_indicator[img_indices[idx]] = True
-        
+            
+        joints_3d_list = copy.deepcopy(torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32))           
         betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1)
         poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
         transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
@@ -103,11 +106,15 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
 
         cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]) 
 
-        for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
+        for idx, (beta, pose, trans, joints_3d, cam_pose) in enumerate(zip(betas, poses, transs, joints_3d_list, cam_poses)):
             verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
+            pelvis_3d = joints_3d[J24_NAME.index('Pelvis'), :]
+            joints_3d = joints_3d[J24_TO_J14, :]
+            joints_3d = joints_3d - pelvis_3d[None,:]
+            joints_3d_list[idx] = torch.FloatTensor(world2cam(joints_3d, cam_pose))
 
         data = {}
         data['img_paths'] = img_paths
@@ -118,6 +125,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         data['vertices']= vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
+        data['joints_3d'] = joints_3d_list
 
         return data  
 

@@ -92,6 +92,7 @@ def main(cfg, cfg_hrnet):
         log_steps = cfg.LOGGING.LOG_STEPS,
         checkpoint_dir = checkpoint_dir,
         cfgs=(cfg, cfg_hrnet),
+        scale = cfg.TRAIN.SCALE,
     )
     
 if __name__ == '__main__':
