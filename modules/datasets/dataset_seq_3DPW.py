@@ -98,7 +98,11 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                     self.img_cache[img_indices[idx]] = img_tensor
                     self.img_cache_indicator[img_indices[idx]] = True
             
-        joints_3d_list = copy.deepcopy(torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32))           
+        joints_3d_list = copy.deepcopy(torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32)).reshape(-1, 24, 3)   
+        pelvis_3d = joints_3d_list[:, J24_NAME.index('Pelvis'), :]    
+        joints_3d_list = joints_3d_list[:, J24_TO_J14, :]
+        joints_3d_list = joints_3d_list - pelvis_3d[:, None,:]
+
         betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1)
         poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
         transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
@@ -111,9 +115,6 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
-            pelvis_3d = joints_3d[J24_NAME.index('Pelvis'), :]
-            joints_3d = joints_3d[J24_TO_J14, :]
-            joints_3d = joints_3d - pelvis_3d[None,:]
             joints_3d_list[idx] = torch.FloatTensor(world2cam(joints_3d, cam_pose))
 
         data = {}
