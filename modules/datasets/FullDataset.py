@@ -2,9 +2,9 @@ import torch
 import numpy as np
 
 from .dataset_3DPW import get_data as get_data_3dpw
-from .dataset_3DPW_wo_trans import get_data as get_data_3dpw_wo
+#from .wo_transformation.dataset_3DPW_wo_trans import get_data as get_data_3dpw_wo
 from .dataset_H36M import get_data as get_data_h36m
-from .dataset_H36M_wo_trans import get_data as get_data_h36m_wo
+#from .wo_transformation.dataset_H36M_wo_trans import get_data as get_data_h36m_wo
 
 from .dataset_seq_3DPW import get_data as get_data_3dpw_seq
 from .dataset_seq_H36M import get_data as get_data_h36m_seq
@@ -115,7 +115,7 @@ def get_full_train_val_data(
     print(f'length validation data: 3dpw: {len(val_data_3dpw)}, h36m: {len(val_data_h36m)}, total: {len(val_data_3dpw)+len(val_data_h36m)}')
 
     return train_data, val_data
-
+'''
 def get_full_train_val_data_wo_trans(
         dataset:str='full',
         data_path_3dpw:str='../3DPW',
@@ -203,7 +203,7 @@ def get_full_train_val_data_wo_trans(
 
     return train_data, val_data
 
-
+'''
 def get_full_seq_train_val_data(
         dataset:str='full',
         data_path_3dpw:str='../3DPW',
