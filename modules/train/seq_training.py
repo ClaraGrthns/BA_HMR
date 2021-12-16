@@ -17,6 +17,7 @@ def _loop(
     writer,
     log_steps,
     device,
+    scale,
 ):
     
     if train:
@@ -33,6 +34,8 @@ def _loop(
         img = batch["imgs"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
+        joints3d_gt = batch['joints_3d'].to(device)
+        joints3d_gt = joints3d_gt.reshape(-1, joints3d_gt.shape[-2], joints3d_gt.shape[-1])
         verts_full_gt = batch["vertices"].to(device)
         verts_full_gt = verts_full_gt.reshape(-1, verts_full_gt.shape[-2], verts_full_gt.shape[-1])
 
@@ -51,11 +54,14 @@ def _loop(
 
 
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
-        joints3d_gt = smpl.get_h36m_joints(verts_full_gt)
+        joints3d_smpl_gt = smpl.get_h36m_joints(verts_full_gt)
         joints3d_pred = smpl.get_h36m_joints(verts_full_pred)
 
-        pelvis_gt = joints3d_gt[:,H36M_J17_NAME.index('Pelvis'),:]
+        pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
+        torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
+
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
+        torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
         #Normalize Groundtruth
         verts_sub2_gt = verts_sub2_gt - pelvis_gt[:, None, :]
@@ -68,8 +74,26 @@ def _loop(
         verts_full_pred = verts_full_pred - pelvis_pred[:, None, :]
 
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
-        joints3d_gt = joints3d_gt[:, H36M_J17_TO_J14,:]
-        
+        joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
+
+        if scale:
+            scale_smpl_gt = torch.torch.linalg.vector_norm((torso_gt-pelvis_gt), dim=-1, keepdim=True)[:, None, :]
+            scale_pred = torch.torch.linalg.vector_norm((torso_pred-pelvis_pred), dim=-1, keepdim=True)[:, None, :]            
+            
+            verts_full_gt = verts_full_gt/scale_smpl_gt
+            verts_sub2_gt = verts_sub2_gt/scale_smpl_gt
+            verts_sub_gt = verts_sub_gt/scale_smpl_gt
+
+            verts_full_pred = verts_full_pred/scale_pred
+            verts_sub2_pred = verts_sub2_pred/scale_pred
+            verts_sub_pred = verts_sub_pred/scale_pred
+    
+            # Scale Joints with Left and Right Hip
+            scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            joints3d_gt = joints3d_gt/scale_gt
+            joints3d_pred = joints3d_pred/scale_pred
+
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred, "KP_3D": joints3d_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt, "KP_3D": joints3d_gt}
@@ -104,7 +128,7 @@ def _loop(
             running_metrics = dict.fromkeys(running_metrics, 0.)
     return epoch_loss, running_loss, running_metrics
 
-def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device,):
+def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device, scale):
     epoch_loss,_,_ =  _loop(
         name='train',
         train=True,
@@ -119,10 +143,11 @@ def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sample
         writer=writer,
         log_steps=log_steps, 
         device=device,
+        scale=scale,
     )
     return epoch_loss/len(loader_trn)
     
-def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device):
+def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, writer, log_steps, device, scale):
     datasets = ['3dpw', 'h36m']
     epoch_loss = 0
     epoch_losses = dict.fromkeys(criterion.keys(), 0)
@@ -145,6 +170,8 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                 writer=writer,
                 log_steps = log_steps, 
                 device=device,
+                scale=scale,
+
             )
             epoch_loss += aux_loss
             for key in epoch_losses.keys():
@@ -172,7 +199,7 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                 batch_size_trn=1, batch_size_val=None, learning_rate=1e-4,
                 writer=None, log_steps = 200, device='auto',
-                checkpoint_dir=None, cfgs=None,):
+                checkpoint_dir=None, cfgs=None, scale=False,):
     
     if device == 'auto':
         if torch.cuda.is_available():
@@ -213,6 +240,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps,
                             device=device,
+                            scale=scale,
                             )
         if epoch % 10 == 0:
             save_checkpoint(model=model, 
@@ -234,6 +262,7 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             writer=writer, 
                             log_steps=log_steps, 
                             device=device,
+                            scale=scale,
                             )
         if mpve < min_mpve:
             min_mpve = mpve

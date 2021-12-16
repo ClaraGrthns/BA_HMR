@@ -140,6 +140,7 @@ def get_data_chunk_list_h36m(annot_dir:str=None,
                     seq_name_to_data[seq_name].append(data)
                 seq_datalist = list(seq_name_to_data.values())
             if store_as_pkl:
+                print('store as pickle')
                 sub_str = f'{min(subject_list)}to{max(subject_list)}'
                 with open(osp.join(out_dir, f'seq_datalist_h36m_thr{fitting_thr}_{sub_str}subj.pickle'), 'wb') as fp:
                     pkl.dump(seq_datalist, fp)

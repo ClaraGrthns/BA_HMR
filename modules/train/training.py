@@ -38,8 +38,8 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch["vertices"].to(device)
-        joints3d_gt = batch["joints_3d"].to(device) # Bx14x3
-        print(joints3d_gt.shape)
+        joints3d_gt = batch["joints_3d"].to(device) # Bx14x3, already standardized with pelvis joint
+
         # zero the parameter gradients
         if train:
             optimizer.zero_grad()
@@ -54,14 +54,17 @@ def _loop(
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_smpl_gt = smpl.get_h36m_joints(vertices_gt)
         joints3d_pred = smpl.get_h36m_joints(vertices_pred)
+        
         pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
         torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
+
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
         # normalize vertices 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
+        
         # normalize predicted joints (gt joints are already normalized with pelvis)
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
@@ -82,9 +85,7 @@ def _loop(
         # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_gt}
-        
-        print('kps', joints3d_pred.shape, joints3d_gt.shape )
-        
+                
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
         for loss_key in criterion.keys():
