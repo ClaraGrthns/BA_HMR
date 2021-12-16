@@ -85,7 +85,12 @@ def _loop(
         # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_gt}
+<<<<<<< HEAD
+        
+        
+=======
                 
+>>>>>>> 46f2c72faaef86a887a57594288a5b6805387593
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
         for loss_key in criterion.keys():
