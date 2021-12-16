@@ -56,7 +56,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 imgs[subj]= torch.from_numpy(zarr.load(zarr_path))
                 print(imgs[subj].device)
             self.imgs = imgs
-            self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
+            #self.imgs = {torch.from_numpy(zarr.load(zarr_path)) for subj, zarr_path in zip(self.subject_list, self.load_from_zarr) }
             ### Load array into memory
         else: 
             self.img_size = img_size

@@ -274,4 +274,4 @@ def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
                             checkpoint_dir=checkpoint_dir,
                             cfgs=cfgs,
                             )
-        #print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')
+        print(f'Epoch: {epoch}; Loss Trn: {loss_trn}; Loss Val: {loss_val}, min Mpve: {min_mpve}')

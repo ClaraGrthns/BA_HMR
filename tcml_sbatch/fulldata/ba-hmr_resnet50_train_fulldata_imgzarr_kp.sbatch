@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=w9-27
+#SBATCH --job-name=res50-kp
 
 #resources:
 
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/train/job.%J.err
+#SBATCH --error=jobs/train/res50-kp.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/train/job.%J.out
+#SBATCH --output=jobs/train/res50-kp.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -68,7 +68,7 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_fulldata.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/fulldata/img_zarr \
+'OUT_DIR' ./checkpoints/fulldata/resnet50 \
 "H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
@@ -77,7 +77,10 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/fulldataset_zarr_resnet34_ep50/fulldata_week 
+"LOGGING.LOGDIR" logging/fulldataset_zarr_resnet34_ep50/resnet50/kp \
+"MODEL.ENCODER" resnet50 \
+"LOSS.KP_3D" 0.5
+
 
 
 echo DONE!
