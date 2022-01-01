@@ -68,29 +68,29 @@ def _loop(
         # normalize predicted joints (gt joints are already normalized with pelvis)
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
-
+        joints3d_smpl_gt = joints3d_smpl_gt[:, H36M_J17_TO_J14,:]
+        joints3d_smpl_gt = joints3d_smpl_gt - pelvis_gt[:, None, :]
+        
         if scale:
             scale_smpl_gt = torch.torch.linalg.vector_norm((torso_gt-pelvis_gt), dim=-1, keepdim=True)[:, None, :]
-            scale_pred = torch.torch.linalg.vector_norm((torso_pred-pelvis_pred), dim=-1, keepdim=True)[:, None, :]            
-            vertices_gt = vertices_gt/scale_smpl_gt
+            scale_pred = torch.torch.linalg.vector_norm((torso_pred-pelvis_pred), dim=-1, keepdim=True)[:, None, :] 
+
             vertices_pred = vertices_pred/scale_pred
+            vertices_gt = vertices_gt/scale_smpl_gt
+            joints3d_pred = joints3d_pred/scale_pred
+            joints3d_smpl_gt = joints3d_smpl_gt/scale_smpl_gt
 
             # Scale Joints with Left and Right Hip
-            scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
-            scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
-            joints3d_pred = joints3d_pred/scale_pred
-            joints3d_gt = joints3d_gt/scale_gt
+            #scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            #scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
+            #joints3d_pred = joints3d_pred/scale_pred
+            #joints3d_gt = joints3d_gt/scale_gt
 
 
         # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_gt}
-<<<<<<< HEAD
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_smpl_gt}
         
-        
-=======
-                
->>>>>>> 46f2c72faaef86a887a57594288a5b6805387593
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
         for loss_key in criterion.keys():

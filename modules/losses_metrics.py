@@ -17,7 +17,7 @@ def criterion_smpl(param_pred, param_gt):
         loss_pose = torch.FloatTensor(1).fill_(0.).to(torch.device("cpu"))
         loss_betas = torch.FloatTensor(1).fill_(0.).to(torch.device("cpu"))
 
-    return loss_betas + loss_pose
+    return 0.001*loss_betas + loss_pose
 
 def criterion_verts(verts_pred, verts_gt):
     if len(verts_gt) > 0:

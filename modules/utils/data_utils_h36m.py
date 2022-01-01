@@ -197,6 +197,7 @@ def get_bbox_from_json(root_dir='../H36M', border_scale=1.3, store_as_json=None,
             with open(osp.join(store_as_json, 'h36m_bboxes.json'), 'w') as fp:
                 json.dump(bboxes, fp)
     return bboxes
+    
 def get_backgrounds_from_folder(background_fp):
     bground_paths = [osp.join(background_fp, bg_img) for bg_img in os.listdir(background_fp)if bg_img.endswith('jpg')]
     return [np.array(Image.open(img_path)) for img_path in bground_paths]

@@ -105,9 +105,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
-        data['joints_3d'] = item['joints_3d']
-        print('h36m', data['joints_3d'].shape)
-
+        data['joints_3d'] = item['joints_3d']/1000
         return data
 
         

@@ -1,6 +1,7 @@
 from .smplpytorch.smplpytorch.pytorch.smpl_layer import SMPL_Layer
 import numpy as np
 import os.path as osp
+import torch
 
 class SMPL(object):
     def __init__(self):
@@ -42,3 +43,14 @@ class SMPL(object):
     def get_layer(self, gender):
         gender='neutral'
         return SMPL_Layer(gender=gender, model_root='../smpl_models/')
+
+    def get_joints(self, vertices):
+        """
+        This method is used to get the joint locations from the SMPL mesh
+        Input:
+            vertices: size = (B, 6890, 3)
+        Output:
+            3D joints: size = (B, 24, 3)
+        """
+        joints = torch.einsum('bik,ji->bjk', [vertices, torch.from_numpy(self.joint_regressor)])
+        return joints
