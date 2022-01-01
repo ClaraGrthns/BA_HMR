@@ -34,8 +34,8 @@ def _loop(
         img = batch["imgs"].to(device)
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
-        joints3d_gt = batch['joints_3d'].to(device)
-        joints3d_gt = joints3d_gt.reshape(-1, joints3d_gt.shape[-2], joints3d_gt.shape[-1])
+        #joints3d_gt = batch['joints_3d'].to(device)
+        #joints3d_gt = joints3d_gt.reshape(-1, joints3d_gt.shape[-2], joints3d_gt.shape[-1])
         verts_full_gt = batch["vertices"].to(device)
         verts_full_gt = verts_full_gt.reshape(-1, verts_full_gt.shape[-2], verts_full_gt.shape[-1])
 
@@ -75,6 +75,8 @@ def _loop(
 
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
+        joints3d_smpl_gt = joints3d_smpl_gt[:, H36M_J17_TO_J14,:]
+        joints3d_smpl_gt = joints3d_smpl_gt - pelvis_gt[:, None, :]
 
         if scale:
             scale_smpl_gt = torch.torch.linalg.vector_norm((torso_gt-pelvis_gt), dim=-1, keepdim=True)[:, None, :]
@@ -88,11 +90,14 @@ def _loop(
             verts_sub2_pred = verts_sub2_pred/scale_pred
             verts_sub_pred = verts_sub_pred/scale_pred
     
-            # Scale Joints with Left and Right Hip
+            joints3d_pred = joints3d_pred/scale_pred
+            joints3d_smpl_gt = joints3d_smpl_gt/scale_smpl_gt
+            
+            '''# Scale Joints with Left and Right Hip
             scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
             scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
             joints3d_gt = joints3d_gt/scale_gt
-            joints3d_pred = joints3d_pred/scale_pred
+            joints3d_pred = joints3d_pred/scale_pred'''
 
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred, "KP_3D": joints3d_pred}
