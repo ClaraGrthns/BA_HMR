@@ -76,12 +76,13 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)    
 
         cam_pose = torch.FloatTensor(seq['cam_poses'][index_seq]) 
+        '''
         joints_3d = seq['jointPositions'][person_id][index_seq].reshape(-1,3)
         pelvis_3d = joints_3d[J24_NAME.index('Pelvis'), :]
         joints_3d = joints_3d[J24_TO_J14, :]
         joints_3d = joints_3d - pelvis_3d[None,:]
         joints_3d = torch.FloatTensor(world2cam(joints_3d, cam_pose))
-
+        '''
         # Resize Image to img_sizeximg_size format with padding (hrnet: 256x256)
         if self.load_from_zarr is not None:
             img_tensor = self.imgs[index] ### Read array from memory

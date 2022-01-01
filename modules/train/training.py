@@ -70,7 +70,7 @@ def _loop(
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
         joints3d_smpl_gt = joints3d_smpl_gt[:, H36M_J17_TO_J14,:]
         joints3d_smpl_gt = joints3d_smpl_gt - pelvis_gt[:, None, :]
-        
+
         if scale:
             scale_smpl_gt = torch.torch.linalg.vector_norm((torso_gt-pelvis_gt), dim=-1, keepdim=True)[:, None, :]
             scale_pred = torch.torch.linalg.vector_norm((torso_pred-pelvis_pred), dim=-1, keepdim=True)[:, None, :] 
@@ -117,8 +117,10 @@ def _loop(
                 iteration=epoch*len(loader)+i,
                 name=name,
                 )
-            running_loss= dict.fromkeys(running_loss, 0.)
+            running_loss = dict.fromkeys(running_loss, 0.)
             running_metrics = dict.fromkeys(running_metrics, 0.)
+            writer.add_scalar('loss total, training', epoch_loss/i, epoch*len(loader)+i)
+
     return epoch_loss, running_loss, running_metrics
 
 
@@ -185,7 +187,9 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                         log_steps=total_length,
                         iteration=epoch+1, 
                         name='validate on 3dpw & h36m',
-                        )        
+                        )
+    writer.add_scalar('loss total, valid', epoch_loss/total_length, epoch+1)
+       
     return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,
