@@ -47,8 +47,8 @@ mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
 cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/H36M/data_pickle/datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
 echo copied datapickle!
 
 cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/

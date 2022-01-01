@@ -61,11 +61,11 @@ def _loop(
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
-        # normalize vertices 
+        # standardized vertices 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
-        # normalize predicted joints (gt joints are already normalized with pelvis)
+        # standardized predicted joints (gt joints are already standardized with pelvis)
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
 
@@ -85,12 +85,7 @@ def _loop(
         # List of Preds and Targets for smpl-params, vertices, 3d-keypoints, (2d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS": vertices_pred, "KP_3D": joints3d_pred}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS": vertices_gt, "KP_3D": joints3d_gt}
-<<<<<<< HEAD
-        
-        
-=======
                 
->>>>>>> 46f2c72faaef86a887a57594288a5b6805387593
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
         for loss_key in criterion.keys():

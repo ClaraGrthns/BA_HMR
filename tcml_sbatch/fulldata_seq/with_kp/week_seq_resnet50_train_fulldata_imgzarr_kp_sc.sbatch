@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=lseq2-50-10
+#SBATCH --job-name=s_kp_sc
 
 #resources:
 
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/seq/train/l50-seq2.10.%J.err
+#SBATCH --error=jobs/seq/train/s_kp_sc.10.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq/train/l50-seq2.10.%J.out
+#SBATCH --output=jobs/seq/train/s_kp_sc.10.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -46,8 +46,8 @@
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
-cp -R /home/grotehans/H36M/data_pickle/seq_datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/H36M/data_pickle/seq_datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/seq_datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/seq_datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
 echo copied datapickle!
 
 cp -R /home/grotehans/3DPW/data_pickle/img_seqs_list_paths_seq /scratch/$SLURM_JOB_ID/
@@ -67,7 +67,7 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata2.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/seq_fulldata/week/batchsize10_res50 \
+'OUT_DIR' ./checkpoints/seq_fulldata/week/w_kp/scale \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
@@ -76,12 +76,12 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq_fulldata_zarr_resnet50_ep50/week/model2_batchsize10_loss \
+"LOGGING.LOGDIR" logging/seq_fulldata_zarr_resnet50_ep50/week/model2_batchsize10_s_kp_sc \
 "TRAIN.BATCH_SIZE_TRN" 10 \
 "MODEL.ENCODER" resnet50 \
-"LOSS.VERTS_FULL" 1. \
-"LOSS.VERTS_SUB2" 1. \
-"LOSS.VERTS_SUB" 1. \
+"TRAIN.SCALE" True \
+"LOSS.KP_3D" 0.5
+
 
 echo DONE!
 
