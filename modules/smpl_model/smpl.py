@@ -47,6 +47,8 @@ JOINT_NAMES = [
     'Head (H36M)', 'Nose', 'Left Eye',
     'Right Eye', 'Left Ear', 'Right Ear'
 ]
+
+
 ### From VIBE:
 JOINT_IDS = {JOINT_NAMES[i]: i for i in range(len(JOINT_NAMES))}
 #SMPL_MEAN_PARAMS = osp.join(VIBE_DATA_DIR, 'smpl_mean_params.npz')
