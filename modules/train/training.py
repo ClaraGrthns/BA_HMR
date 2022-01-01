@@ -61,11 +61,11 @@ def _loop(
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
-        # normalize vertices 
+        # standardized vertices 
         vertices_gt = vertices_gt - pelvis_gt[:, None, :]
         vertices_pred = vertices_pred - pelvis_pred[:, None, :]
         
-        # normalize predicted joints (gt joints are already normalized with pelvis)
+        # standardized predicted joints (gt joints are already standardized with pelvis)
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
         joints3d_smpl_gt = joints3d_smpl_gt[:, H36M_J17_TO_J14,:]
