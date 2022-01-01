@@ -92,7 +92,7 @@ def _loop(
     
             joints3d_pred = joints3d_pred/scale_pred
             joints3d_smpl_gt = joints3d_smpl_gt/scale_smpl_gt
-            
+
             '''# Scale Joints with Left and Right Hip
             scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
             scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
@@ -101,7 +101,7 @@ def _loop(
 
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred, "KP_3D": joints3d_pred}
-        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt, "KP_3D": joints3d_gt}
+        targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt, "KP_3D": joints3d_smpl_gt}
         
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
@@ -131,6 +131,7 @@ def _loop(
                 )
             running_loss= dict.fromkeys(running_loss, 0.)
             running_metrics = dict.fromkeys(running_metrics, 0.)
+            writer.add_scalar('loss total, training', epoch_loss/i, epoch*len(loader)+i)
     return epoch_loss, running_loss, running_metrics
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, smpl, mesh_sampler, epoch, writer,log_steps, device, scale):
@@ -197,7 +198,9 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                         log_steps=total_length,
                         iteration=epoch+1, 
                         name=f'validate on {datasets}',
-                        )        
+                        )  
+        writer.add_scalar('loss total, valid', epoch_loss/total_length, epoch+1)
+      
     return epoch_loss/total_length, epoch_metrics['VERTS_FULL']/total_length
 
                 
