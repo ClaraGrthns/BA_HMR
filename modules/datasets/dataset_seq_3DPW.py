@@ -126,7 +126,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         data['vertices']= vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
-        data['joints_3d'] = joints_3d_list
+        #data['joints_3d'] = joints_3d_list
 
         return data  
 

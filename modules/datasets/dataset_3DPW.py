@@ -111,7 +111,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
-        data['joints_3d'] = joints_3d
+        #data['joints_3d'] = joints_3d
         return data
     
 def get_train_val_data(data_path, 

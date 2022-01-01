@@ -127,7 +127,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         data['vertices'] = vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = cam_intr
-        data['joints_3d'] = joints_3d
+        #data['joints_3d'] = joints_3d
         return data
    
     def set_chunks(self):
