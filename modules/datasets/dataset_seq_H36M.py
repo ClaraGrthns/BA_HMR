@@ -97,7 +97,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         poses = torch.empty((0, 72), dtype=torch.float32)
         betas = torch.empty((0, 10), dtype=torch.float32)
         transs = torch.empty((0, 3), dtype=torch.float32)
-        joints_3d = torch.empty((0, 14, 3), dtype=torch.float32)
+        #joints_3d = torch.empty((0, 14, 3), dtype=torch.float32)
         vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32)
 
         cam_poses = torch.empty((0, 4, 4), dtype=torch.float32)
@@ -108,7 +108,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             betas = torch.cat((betas, item['betas'][None]), 0)
             transs = torch.cat((transs,item['trans']), 0)
             cam_poses = torch.cat((cam_poses, item['cam_pose'][None]),0)
-            joints_3d = torch.cat((joints_3d, item['joints_3d'][None]))
+            #joints_3d = torch.cat((joints_3d, item['joints_3d'][None]))
 
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
@@ -127,7 +127,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         data['vertices'] = vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = cam_intr
-        data['joints_3d'] = joints_3d
+        #data['joints_3d'] = joints_3d
         return data
    
     def set_chunks(self):

@@ -38,7 +38,7 @@ def _loop(
         betas_gt = batch["betas"].to(device)
         poses_gt = batch["poses"].to(device)
         vertices_gt = batch["vertices"].to(device)
-        joints3d_gt = batch["joints_3d"].to(device) # Bx14x3, already standardized with pelvis joint
+        #joints3d_gt = batch["joints_3d"].to(device) # Bx14x3, already standardized with pelvis joint
 
         # zero the parameter gradients
         if train:
