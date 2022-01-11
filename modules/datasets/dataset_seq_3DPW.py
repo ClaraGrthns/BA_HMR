@@ -110,8 +110,8 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
 
         cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]) 
 
-        #for idx, (beta, pose, trans, joints_3d, cam_pose) in enumerate(zip(betas, poses, transs, joints_3d_list, cam_poses)):
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
+        #for idx, (beta, pose, trans, joints_3d, cam_pose) in enumerate(zip(betas, poses, transs, joints_3d_list, cam_poses)):
             verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
@@ -127,7 +127,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         data['vertices']= vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
-       #data['joints_3d'] = joints_3d_list
+        #data['joints_3d'] = joints_3d_list
 
         return data  
 

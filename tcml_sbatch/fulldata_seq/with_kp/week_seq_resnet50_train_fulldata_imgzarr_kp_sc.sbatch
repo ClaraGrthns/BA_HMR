@@ -20,16 +20,16 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=6-00
+#SBATCH --time=6-05
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
 
 
-#SBATCH --error=jobs/seq/train/s_kp_sc.10.%J.err
+#SBATCH --error=jobs/seq/train/s_l1kp_sc.10.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq/train/s_kp_sc.10.%J.out
+#SBATCH --output=jobs/seq/train/s_l1kp_sc.10.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -76,11 +76,11 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq_fulldata_zarr_resnet50_ep50/week/model2_batchsize10_s_kp_sc \
+"LOGGING.LOGDIR" logging/seq_fulldata_zarr_resnet50_ep50/week/model2_batchsize10_s_l1kp_sc \
 "TRAIN.BATCH_SIZE_TRN" 10 \
 "MODEL.ENCODER" resnet50 \
 "TRAIN.SCALE" True \
-"LOSS.KP_3D" 0.5
+"LOSS.KP_3D" 0.3
 
 
 echo DONE!

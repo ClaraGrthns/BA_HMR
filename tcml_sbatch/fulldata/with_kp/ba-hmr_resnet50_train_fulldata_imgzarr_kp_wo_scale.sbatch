@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/train/kp_wo_sc.%J.err
+#SBATCH --error=jobs/train/l1_03_kp_wo_sc.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/train/kp_wo_sc.%J.out
+#SBATCH --output=jobs/train/l1_03kp_wo_sc.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -77,9 +77,9 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/fulldataset_zarr_resnet50/kp_wo_scale \
+"LOGGING.LOGDIR" logging/fulldataset_zarr_resnet50/l1kp_wo_scale \
 "MODEL.ENCODER" resnet50 \
-"LOSS.KP_3D" 0.5
+"LOSS.KP_3D" 0.3
 
 
 
