@@ -116,8 +116,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
-        betas = torch.mean(betas[betas.nonzero(as_tuple=True)].view(-1, betas.shape[1]), dim=0)
-        
+        betas = torch.mean(betas.view(-1, betas.shape[1]), dim=0)
         data = {}
         data['img_paths'] = img_paths
         data['imgs'] = imgs_tensor

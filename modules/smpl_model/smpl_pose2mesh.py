@@ -52,5 +52,5 @@ class SMPL(object):
         Output:
             3D joints: size = (B, 24, 3)
         """
-        joints = torch.einsum('bik,ji->bjk', [vertices, torch.from_numpy(self.joint_regressor)])
+        joints = torch.einsum('bik, ji->bjk', [vertices, torch.from_numpy(self.joint_regressor)])
         return joints

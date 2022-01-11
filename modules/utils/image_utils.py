@@ -5,7 +5,7 @@ import torch
 from matplotlib import pyplot as plt
 
 from .data_utils_3dpw import get_relevant_keypoints
-#from .render import Renderer
+from .render import Renderer
 from .geometry import rotation_matrix_to_angle_axis
 import cv2
 
@@ -104,6 +104,7 @@ def visualize_mesh(img, cam_intr, smpl, beta=None, pose=None, trans=None, vertic
     faces = smpl.faces.cpu().numpy()
     if vertices is None:
         vertices = smpl(pose=pose, beta=beta) + trans
+    vertices = vertices.reshape(6890, 3)
     vertices = vertices.detach().numpy()
     ## camera: rotation matrix, t, f and center
         #cam_rot = rotation_matrix_to_angle_axis(cam_pose[None, :3, :3]).detach().numpy().ravel()

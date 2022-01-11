@@ -54,6 +54,35 @@ def get_model(dim_z, encoder, cfg_hrnet):
     )
     return model
 
+class PoseSeqNetXtreme3(torch.nn.Module):
+    def __init__(self, encoder, shape_pose_decoder, dim_z=128):
+        super(PoseSeqNetXtreme3, self).__init__()
+        self.encoder = encoder
+        self.dim_z = dim_z
+        self.linear = torch.nn.Linear(1000, self.dim_z)
+        self.shape_pose_decoder = shape_pose_decoder
+        
+    def forward(self, images):
+        batch_size = images.shape[0]
+        img_size = images.shape[-2:]
+        seq_len = images.shape[1]
+        images = images.view(batch_size*seq_len, 3,img_size[0],img_size[1])
+        features = self.linear(torch.nn.functional.relu(self.encoder(images)))
+        betas, poses = self.shape_pose_encoder(features)
+        betas = betas.view(batch_size, seq_len, -1) 
+        poses = poses.view(batch_size, seq_len, -1) 
+        beta = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
+        return beta, poses
+
+def get_model_seq3(dim_z, encoder, cfg_hrnet):
+    encoder_pretrained = get_encoder(encoder, cfg_hrnet)
+    model = PoseSeqNetXtreme2(
+        encoder=encoder_pretrained,
+        shape_pose_decoder=PoseDecoder(dim_z, dim_z, dim_z),
+        dim_z=dim_z
+    )
+    return model
+
 class PoseSeqNetXtreme2(torch.nn.Module):
     def __init__(self, encoder, decoder, shape_pose_encoder, dim_z=128):
         super(PoseSeqNetXtreme2, self).__init__()

@@ -38,7 +38,7 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         t = np.array(cam_pose[0:3,3], dtype=np.float32).reshape(3)
 
         # change to mean shape if beta is too far from it
-        beta[(beta.abs() > 3).any(dim=1)] = 0.
+        beta[(beta.abs() > 4).any(dim=1)] = 0.
 
         # transform world coordinate to camera coordinate
         root_pose = pose[root_idx, :].numpy()
