@@ -68,15 +68,15 @@ class PoseSeqNetXtreme3(torch.nn.Module):
         seq_len = images.shape[1]
         images = images.view(batch_size*seq_len, 3,img_size[0],img_size[1])
         features = self.linear(torch.nn.functional.relu(self.encoder(images)))
-        betas, poses = self.shape_pose_encoder(features)
+        betas, poses = self.shape_pose_decoder(features)
         betas = betas.view(batch_size, seq_len, -1) 
         poses = poses.view(batch_size, seq_len, -1) 
         beta = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
         return beta, poses
 
-def get_model_seq3(dim_z, encoder, cfg_hrnet):
+def get_model_seq_smpl(dim_z, encoder, cfg_hrnet):
     encoder_pretrained = get_encoder(encoder, cfg_hrnet)
-    model = PoseSeqNetXtreme2(
+    model = PoseSeqNetXtreme3(
         encoder=encoder_pretrained,
         shape_pose_decoder=PoseDecoder(dim_z, dim_z, dim_z),
         dim_z=dim_z

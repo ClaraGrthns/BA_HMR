@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s_kp_wo_sc
+#SBATCH --job-name=s2_kp_wo_sc
 
 #resources:
 
@@ -65,7 +65,7 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata3.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet34_ep50.yaml \
+--cfg /home/grotehans/BA_HMR/configs/experiments/seq2_zarr_resnet50_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 'OUT_DIR' ./checkpoints/seq2/kp_wo_sc \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
