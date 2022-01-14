@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=lseq2-50-10
+#SBATCH --job-name=s2_wo_kp_wp_sc
 
 #resources:
 
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/seq/train/wo_kp_wo_sc.%J.err
+#SBATCH --error=jobs/seq_smpl/wo_kp_wo_sc.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq/train/wo_kp_wo_sc.%J.out
+#SBATCH --output=jobs/seq_smpl/wo_kp_wo_sc.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -64,8 +64,8 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata2.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet34_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata3.py \
+--cfg /home/grotehans/BA_HMR/configs/experiments/seq2_zarr_resnet50_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 'OUT_DIR' ./checkpoints/seq2/wo_kp_wo_sc \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \

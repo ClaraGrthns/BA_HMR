@@ -32,8 +32,8 @@ def _loop(
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
         img = batch["imgs"].to(device)
-        betas_gt = batch["betas"].to(device)
-        poses_gt = batch["poses"].to(device)
+        betas_gt = batch["betas"].to(device).reshape(-1, 10)
+        poses_gt = batch["poses"].to(device).reshape(-1, 72)
         verts_gt = batch["vertices"].to(device)
         verts_gt = verts_gt.reshape(-1, verts_gt.shape[-2], verts_gt.shape[-1])
 
@@ -187,7 +187,7 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                         )  
         writer.add_scalar('loss total, valid', epoch_loss/total_length, epoch+1)
       
-    return epoch_loss/total_length, epoch_metrics['VERTS_FULL']/total_length
+    return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
 
                 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,

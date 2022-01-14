@@ -25,7 +25,7 @@ MODEL:
     ENCODER: 'resnet50'
 LOSS: 
     SMPL: 0.
-    VERTS: 0.
+    VERTS: 1.
     KP_2D: 0.
     KP_3D: 0.
     VERTS_FULL: 0.
