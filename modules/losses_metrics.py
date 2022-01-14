@@ -60,6 +60,7 @@ def mean_per_vertex_error(vert_pred, vert_gt):
     
 def get_metrics_dict(metr_weights):
     metr_dict = {"VERTS": mean_per_vertex_error,
+                "VERTS_SMPL": mean_per_vertex_error,
                 "VERTS_FULL": mean_per_vertex_error,
                 "VERTS_SUB2": mean_per_vertex_error,
                 "VERTS_SUB": mean_per_vertex_error,
@@ -70,6 +71,7 @@ def get_metrics_dict(metr_weights):
 def get_criterion_dict(loss_weights):
     loss_dict = {"SMPL" : criterion_smpl, 
                  "VERTS": criterion_verts,
+                 "VERTS_SMPL": criterion_verts,
                  "VERTS_FULL": criterion_verts,
                  "VERTS_SUB2": criterion_verts,
                  "VERTS_SUB": criterion_verts,

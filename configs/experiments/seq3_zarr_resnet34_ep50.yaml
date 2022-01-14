@@ -26,7 +26,7 @@ MODEL:
 LOSS: 
     SMPL: 0.
     VERTS: 0.
-    VERTS_SMPL: 0.
+    VERTS_SMPL: 1.
     KP_2D: 0.
     KP_3D: 0.
     VERTS_FULL: 1.
@@ -40,4 +40,4 @@ METRIC:
     VERTS_FULL: 1.
     VERTS_SUB2: 1.
     VERTS_SUB: 1.
-    VERTS_SMPL: 0.
+    VERTS_SMPL: 1.

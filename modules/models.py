@@ -1,8 +1,10 @@
-from os import dup
 import torch
 from torch._C import dtype
 import torchvision.models as models
 from hrnet_model_imgnet.models.cls_hrnet import get_cls_net
+
+from __future__ import division
+import torch.nn.functional as F
 
 
 class PoseNetXtreme(torch.nn.Module):
@@ -53,6 +55,42 @@ def get_model(dim_z, encoder, cfg_hrnet):
         dim_z=dim_z,
     )
     return model
+
+class PoseSeqNetXtreme4(torch.nn.Module):
+    def __init__(self, encoder, decoder, shape_pose_encoder, smpl_regressor, dim_z=128):
+        super(PoseSeqNetXtreme4, self).__init__()
+        self.encoder = encoder
+        self.dim_z = dim_z
+        self.linear = torch.nn.Linear(1000, self.dim_z)
+        self.shape_pose_encoder = shape_pose_encoder
+        self.decoder = decoder
+        self.smpl_regressor = smpl_regressor
+        
+    def forward(self, images):
+        batch_size = images.shape[0]
+        img_size = images.shape[-2:]
+        seq_len = images.shape[1]
+        images = images.view(batch_size*seq_len, 3,img_size[0],img_size[1])
+        features = self.linear(torch.nn.functional.relu(self.encoder(images)))
+        betas, poses = self.shape_pose_encoder(features)
+        betas = betas.view(batch_size, seq_len, -1) 
+        poses = poses.view(batch_size, seq_len, -1) 
+        betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
+        z = torch.cat((betas, poses), dim=-1)
+        verts_sub2, verts_sub, verts_full = self.decoder(z)
+        poses, betas = self.smpl_regressor(verts_sub)
+        return betas, poses, verts_sub2.reshape(-1, 431, 3), verts_sub.reshape(-1, 1723, 3), verts_full.reshape(-1, 6890,3)
+
+def get_model_seq4(dim_z, dim_z_pose , dim_z_shape,  encoder, cfg_hrnet):
+    encoder_pretrained = get_encoder(encoder, cfg_hrnet)
+    model = PoseSeqNetXtreme4(
+        encoder=encoder_pretrained,
+        shape_pose_encoder=PoseDecoder(dim_z, dim_z, dim_z),
+        decoder=PoseSeqDecoder(dim_z_pose+dim_z_shape),
+        dim_z=dim_z
+    )
+    return model
+
 
 class PoseSeqNetXtreme3(torch.nn.Module):
     def __init__(self, encoder, shape_pose_decoder, dim_z=128):
@@ -160,3 +198,62 @@ def get_model_seq(dim_z_pose, dim_z_shape, encoder, cfg_hrnet):
         dim_z_pose=dim_z_pose,
     )
     return model
+
+class SMPLParamRegressor(torch.nn.Module):
+
+    def __init__(self):
+        super(SMPLParamRegressor, self).__init__()
+        # 1723 is the number of vertices in the subsampled SMPL mesh
+        self.layers = torch.nn.Sequential(
+            FCBlock(1723 * 3, 1024),
+            FCResBlock(1024, 1024),
+            FCResBlock(1024, 1024),
+            torch.nn.Linear(1024, 24 * 3 + 10))
+
+    def forward(self, x):
+        """Forward pass.
+        Input:
+            x: size = (B, 1723*6)
+        Returns:
+            SMPL pose parameters as rotation matrices: size = (B,24,3,3)
+            SMPL shape parameters: size = (B,10)
+        """
+        x = x.view(-1, 1723 * 3)
+        x = self.layers(x)
+        poses = x[:, :24*3].view(-1, 24*3)
+        betas = x[:, 24*3:].view(-1, 10)
+        return poses, betas
+
+"""
+This file contains definitions of layers used as building blocks in SMPLParamRegressor
+"""
+
+
+class FCBlock(torch.nn.Module):
+    """Wrapper around nn.Linear that includes batch normalization and activation functions."""
+    def __init__(self, in_size, out_size, batchnorm=True, activation=torch.nn.ReLU(inplace=True), dropout=False):
+        super(FCBlock, self).__init__()
+        module_list = [torch.nn.Linear(in_size, out_size)]
+        if batchnorm:
+            module_list.append(torch.nn.BatchNorm1d(out_size))
+        if activation is not None:
+            module_list.append(activation)
+        if dropout:
+            module_list.append(dropout)
+        self.fc_block = torch.nn.Sequential(*module_list)
+        
+    def forward(self, x):
+        return self.fc_block(x)
+
+class FCResBlock(torch.nn.Module):
+    """Residual block using fully-connected layers."""
+    def __init__(self, in_size, out_size, batchnorm=True, activation=torch.nn.ReLU(inplace=True), dropout=False):
+        super(FCResBlock, self).__init__()
+        self.fc_block = torch.nn.Sequential(torch.nn.Linear(in_size, out_size),
+                                      torch.nn.BatchNorm1d(out_size),
+                                      torch.nn.ReLU(inplace=True),
+                                      torch.nn.Linear(out_size, out_size),
+                                      torch.nn.BatchNorm1d(out_size))
+        
+    def forward(self, x):
+        return F.relu(x + self.fc_block(x))
