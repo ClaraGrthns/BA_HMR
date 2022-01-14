@@ -31,6 +31,7 @@ LOSS:
     VERTS_FULL: 0.
     VERTS_SUB2: 0.
     VERTS_SUB: 0.
+    VERTS_SMPL: 0.
 METRIC: 
     SMPL: 1.
     VERTS: 1.
@@ -39,3 +40,4 @@ METRIC:
     VERTS_FULL: 0.
     VERTS_SUB2: 0.
     VERTS_SUB: 0.
+    VERTS_SMPL: 0.
