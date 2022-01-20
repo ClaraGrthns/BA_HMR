@@ -1,9 +1,10 @@
+from __future__ import division
+
 import torch
 from torch._C import dtype
 import torchvision.models as models
 from hrnet_model_imgnet.models.cls_hrnet import get_cls_net
 
-from __future__ import division
 import torch.nn.functional as F
 
 
