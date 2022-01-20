@@ -126,7 +126,7 @@ def _loop(
 
 
 def trn_loop(model, optimizer, loader_trn, criterion, metrics, epoch, writer,log_steps, device, smpl, scale):
-    epoch_loss,_,_ =  _loop(
+    epoch_loss,_,running_metrics =  _loop(
         name='train',
         train=True,
         model=model,
@@ -189,7 +189,8 @@ def val_loop(model, loader_val, criterion, metrics, epoch, writer, log_steps, de
                         name='validate on 3dpw & h36m',
                         )
     writer.add_scalar('loss total, valid', epoch_loss/total_length, epoch+1)
-       
+    if "SMPL" in epoch_metrics.keys():
+        print('smpl metric:', epoch_metrics['SMPL']/total_length)
     return epoch_loss/total_length, epoch_metrics['VERTS']/total_length
 
 def train_model(model, num_epochs, data_trn, data_val, criterion, metrics,

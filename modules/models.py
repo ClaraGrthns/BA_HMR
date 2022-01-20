@@ -1,9 +1,9 @@
+from __future__ import division
+
 import torch
 from torch._C import dtype
 import torchvision.models as models
 from hrnet_model_imgnet.models.cls_hrnet import get_cls_net
-
-from __future__ import division
 import torch.nn.functional as F
 
 
@@ -79,6 +79,10 @@ class PoseSeqNetXtreme4(torch.nn.Module):
         z = torch.cat((betas, poses), dim=-1)
         verts_sub2, verts_sub, verts_full = self.decoder(z)
         poses, betas = self.smpl_regressor(verts_sub)
+
+        betas = betas.reshape(batch_size, seq_len, -1) 
+        betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
+        betas = betas.reshape(-1, 10)
         return betas, poses, verts_sub2.reshape(-1, 431, 3), verts_sub.reshape(-1, 1723, 3), verts_full.reshape(-1, 6890,3)
 
 def get_model_seq4(dim_z, dim_z_pose , dim_z_shape,  encoder, cfg_hrnet):
@@ -87,7 +91,8 @@ def get_model_seq4(dim_z, dim_z_pose , dim_z_shape,  encoder, cfg_hrnet):
         encoder=encoder_pretrained,
         shape_pose_encoder=PoseDecoder(dim_z, dim_z, dim_z),
         decoder=PoseSeqDecoder(dim_z_pose+dim_z_shape),
-        dim_z=dim_z
+        dim_z=dim_z,
+        smpl_regressor = SMPLParamRegressor(),
     )
     return model
 
@@ -220,8 +225,8 @@ class SMPLParamRegressor(torch.nn.Module):
         """
         x = x.view(-1, 1723 * 3)
         x = self.layers(x)
-        poses = x[:, :24*3].view(-1, 24*3)
-        betas = x[:, 24*3:].view(-1, 10)
+        poses = x[:, :24*3].reshape(-1, 24*3).contiguous()
+        betas = x[:, 24*3:].reshape(-1, 10).contiguous()
         return poses, betas
 
 """

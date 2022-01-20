@@ -70,8 +70,8 @@ def main(cfg, cfg_hrnet):
                             )
     process = psutil.Process(os.getpid())
     print('datasets loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
-
-    model = get_model_seq(dim_z=cfg.MODEL.DIM_Z, encoder=cfg.MODEL.ENCODER, cfg_hrnet= cfg_hrnet)
+    
+    model = get_model_seq(dim_z=cfg.MODEL.DIM_Z, dim_z_pose = cfg.MODEL.DIM_Z_POSE, dim_z_shape= cfg.MODEL.DIM_Z_SHAPE ,encoder=cfg.MODEL.ENCODER, cfg_hrnet= cfg_hrnet)
     #dummy_input = next(iter(torch.utils.data.DataLoader((train_data))))["img"]
     #writer.add_graph(model, dummy_input)
 

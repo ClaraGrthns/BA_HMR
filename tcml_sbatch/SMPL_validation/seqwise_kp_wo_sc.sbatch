@@ -20,16 +20,16 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=6-00
+#SBATCH --time=7-00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
 
 
-#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.%J.err
+#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.mean.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq_verts_smpl/kp_wo_sc.%J.out
+#SBATCH --output=jobs/seq_verts_smpl/kp_wo_sc.mean.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -43,6 +43,8 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
+echo with mean shape!
+echo date 17 01 22
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
@@ -65,7 +67,7 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata4.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/seq2_zarr_resnet50_ep50.yaml \
+--cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet50_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
 'OUT_DIR' ./checkpoints/seq3/kp_wo_sc \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
@@ -78,7 +80,9 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
 "LOGGING.LOGDIR" logging/seq3/kp_wo_sc \
 "LOSS.KP_3D" 0.3 \
-"LOSS.VERTS_SMPL" 1.
+"LOSS.VERTS_SMPL" 1. \
+"METRIC.VERTS_SMPL" 1. \
+"METRIC.SMPL" 1.
 
 
 echo DONE!

@@ -98,8 +98,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         
         beta = item['betas']
         pose = item['poses']
-        verts, joints = self.smpl(pose.reshape(1,-1), beta.reshape(1,-1))
-
+        verts, _ = self.smpl(pose.reshape(1,-1), beta.reshape(1,-1))
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = item['trans'].reshape(3)

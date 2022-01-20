@@ -4,14 +4,14 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s_wo_kp_wo_sc
+#SBATCH --job-name=smpl_img_kp
 
 #resources:
 
 #SBATCH --cpus-per-task=9
 # the job can use and see 12 CPUs (from max 24).
 
-#SBATCH --partition=week
+#SBATCH --partition=day
 # the slurm partition the job is queued to.
 
 #SBATCH --mem-per-cpu=26G
@@ -20,16 +20,16 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=6-00
+#SBATCH --time=5:00:00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
 
 
-#SBATCH --error=jobs/seq/train/new_s_wo_kp_wo_sc.%J.err
+#SBATCH --error=jobs/smpl_metr/img_kp_wo_sc.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq/train/new_s_wo_kp_wo_sc.%J.out
+#SBATCH --output=jobs/smpl_metr/img_kp_wo_sc.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -43,15 +43,15 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-echo start wo kp wo sc seq model again
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
-cp -R /home/grotehans/H36M/data_pickle_kp3d/seq_datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
-cp -R /home/grotehans/H36M/data_pickle_kp3d/seq_datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
+cp -r /home/grotehans/H36M/backgrounds /scratch/$SLURM_JOB_ID/H36M/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/datalist_h36m_thr25_1to8subj.pickle /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/H36M/data_pickle_kp3d/datalist_h36m_thr25_9to11subj.pickle /scratch/$SLURM_JOB_ID/
 echo copied datapickle!
 
-cp -R /home/grotehans/3DPW/data_pickle/img_seqs_list_paths_seq /scratch/$SLURM_JOB_ID/
+cp -R /home/grotehans/3DPW/data_pickle/ids_imgpaths_seq/ /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_train.zarr /scratch/$SLURM_JOB_ID/
 cp -R /home/grotehans/3DPW/img_zarr/imgs_3dpw_valid.zarr /scratch/$SLURM_JOB_ID/
 echo copied zarr img and pickle files!
@@ -65,24 +65,26 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata2.py \
---cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet50_ep50.yaml \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/run_validate.py \
+--cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr_resnet34_ep50.yaml \
+--model img \
+--pretrained /home/grotehans/BA_HMR/checkpoints/fulldata/resnet50/kp_wo_scale/01_02_2022/imgwise_resnet50_bs16_lr0.0001_minkp8/checkpoint_min_val_loss_epoch_46.pt \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/seq/wo_kp_wo_sc \
-"H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
-"H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
+'OUT_DIR' ./checkpoints/fulldata/resnet50/kp_wo_scale \
+"H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
+"H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
 "THREEDPW.LOAD_FROM_ZARR.TRN" /scratch/$SLURM_JOB_ID/imgs_3dpw_train.zarr \
 "THREEDPW.LOAD_FROM_ZARR.VAL" /scratch/$SLURM_JOB_ID/imgs_3dpw_valid.zarr \
-"THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
-"THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
+"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
+"THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq/new_wo_kp_wo_sc \
-"TRAIN.BATCH_SIZE_TRN" 10 \
+"LOGGING.LOGDIR" logging/smpl_metr/kp_wo_sc \
 "MODEL.ENCODER" resnet50 \
-"LOSS.VERTS_FULL" 1. \
-"LOSS.VERTS_SUB2" 0.25 \
-"LOSS.VERTS_SUB" 0.5 \
+"LOSS.KP_3D" 0.3 \
+"METRIC.SMPL" 1. \
+
+
 
 echo DONE!
 

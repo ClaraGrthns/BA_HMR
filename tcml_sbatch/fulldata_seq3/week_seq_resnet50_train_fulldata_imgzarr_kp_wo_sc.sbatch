@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s_wo_kp_wo_sc
+#SBATCH --job-name=s3_kp_wo_sc
 
 #resources:
 
@@ -20,16 +20,16 @@
 #SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
-#SBATCH --time=6-00
+#SBATCH --time=7-00
 # the maximum time the scripts needs to run
 # "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"
 
 
 
-#SBATCH --error=jobs/seq/train/new_s_wo_kp_wo_sc.%J.err
+#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.n..mean.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq/train/new_s_wo_kp_wo_sc.%J.out
+#SBATCH --output=jobs/seq_verts_smpl/kp_wo_sc.n.mean.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -43,7 +43,8 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
-echo start wo kp wo sc seq model again
+echo with mean shape!
+echo date 17 01 22
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
@@ -65,10 +66,10 @@ ls /scratch/$SLURM_JOB_ID/H36M/img_zarr
 ####
 
 singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.simg \
-/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata2.py \
+/home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata4.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet50_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/seq/wo_kp_wo_sc \
+'OUT_DIR' ./checkpoints/seq3/kp_wo_sc \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
@@ -77,12 +78,12 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq/new_wo_kp_wo_sc \
-"TRAIN.BATCH_SIZE_TRN" 10 \
-"MODEL.ENCODER" resnet50 \
-"LOSS.VERTS_FULL" 1. \
-"LOSS.VERTS_SUB2" 0.25 \
-"LOSS.VERTS_SUB" 0.5 \
+"LOGGING.LOGDIR" logging/seq3/kp_wo_sc_norm \
+"LOSS.KP_3D" 0.3 \
+"LOSS.VERTS_SMPL" 1. \
+"METRIC.VERTS_SMPL" 1. \
+"METRIC.SMPL" 1.
+
 
 echo DONE!
 

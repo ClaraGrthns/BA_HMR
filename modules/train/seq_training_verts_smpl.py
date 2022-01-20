@@ -57,11 +57,13 @@ def _loop(
         # Get 3d Joints from smpl-model (dim: 17x3) and normalize with Pelvis
         joints3d_smpl_gt = smpl.get_h36m_joints(verts_full_gt)
         joints3d_pred = smpl.get_h36m_joints(verts_full_pred)
+        joints3d_pred_smpl = smpl.get_h36m_joints(verts_pred_smpl)
 
         pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
         torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
 
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
+        pelvis_pred_smpl = joints3d_pred_smpl[:, H36M_J17_NAME.index('Pelvis'),:] 
         torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
         #Normalize Groundtruth
@@ -73,6 +75,7 @@ def _loop(
         verts_sub2_pred = verts_sub2_pred - pelvis_pred[:, None, :]
         verts_sub_pred = verts_sub_pred - pelvis_pred[:, None, :]
         verts_full_pred = verts_full_pred - pelvis_pred[:, None, :]
+        verts_pred_smpl = verts_pred_smpl - pelvis_pred_smpl
 
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]
@@ -201,7 +204,8 @@ def val_loop(model, loader_val, criterion, metrics, smpl, mesh_sampler, epoch, w
                         name=f'validate on {datasets}',
                         )  
         writer.add_scalar('loss total, valid', epoch_loss/total_length, epoch+1)
-      
+    if "SMPL" in epoch_metrics.keys():
+        print('smpl metrics:', epoch_metrics['SMPL']/total_length)
     return epoch_loss/total_length, epoch_metrics['VERTS_FULL']/total_length
 
                 

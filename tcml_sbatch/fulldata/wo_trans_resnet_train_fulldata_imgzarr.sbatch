@@ -77,7 +77,11 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/fulldata_without_trans
+"LOGGING.LOGDIR" logging/fulldata_without_trans \
+"MODEL.ENCODER" resnet50 \
+"METRIC.SMPL" 1. 
+
+
 
 echo DONE!
 

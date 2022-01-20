@@ -47,7 +47,7 @@ MODEL:
     DIM_Z: 128
     DIM_Z_POSE: 72
     DIM_Z_SHAPE: 10
-    ENCODER: 'resnet43'
+    ENCODER: 'resnet34'
 LOSS: 
     SMPL: 0.
     VERTS: 1.
