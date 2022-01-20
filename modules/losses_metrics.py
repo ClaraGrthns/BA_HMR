@@ -7,7 +7,8 @@ def criterion_smpl(param_pred, param_gt):
     betas_gt, poses_gt = param_gt
     
     # Angle Axis Represenation (Bx24x3)--> Rotation Matrix (Bx24x3x3) (-> Rodrigues' Rotation formula)
-    rotmat_pred = batch_rodrigues(poses_pred.reshape(-1,3)).reshape(-1, 24, 3, 3)
+    #rotmat_pred = batch_rodrigues(poses_pred.reshape(-1,3)).reshape(-1, 24, 3, 3)
+    rotmat_pred = poses_pred.reshape(-1, 24, 3, 3)
     rotmat_gt = batch_rodrigues(poses_gt.reshape(-1,3)).reshape(-1, 24, 3, 3)
    
     if len(rotmat_pred) > 0:

@@ -2,9 +2,9 @@ import torch
 import numpy as np
 
 from .dataset_3DPW import get_data as get_data_3dpw
-#from .wo_transformation.dataset_3DPW_wo_trans import get_data as get_data_3dpw_wo
+from .dataset_3DPW_wo_trans import get_data as get_data_3dpw_wo
 from .dataset_H36M import get_data as get_data_h36m
-#from .wo_transformation.dataset_H36M_wo_trans import get_data as get_data_h36m_wo
+from .dataset_H36M_wo_trans import get_data as get_data_h36m_wo
 
 from .dataset_seq_3DPW import get_data as get_data_3dpw_seq
 from .dataset_seq_H36M import get_data as get_data_h36m_seq

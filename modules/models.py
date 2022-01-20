@@ -77,8 +77,9 @@ class PoseSeqNetXtreme4(torch.nn.Module):
         poses = poses.view(batch_size, seq_len, -1) 
         betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
         z = torch.cat((betas, poses), dim=-1)
+
         verts_sub2, verts_sub, verts_full = self.decoder(z)
-        poses, betas = self.smpl_regressor(verts_sub)
+        poses, betas = self.smpl_regressor(verts_sub.reshape(seq_len*batch_size, -1))
 
         betas = betas.reshape(batch_size, seq_len, -1) 
         betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
@@ -92,7 +93,7 @@ def get_model_seq4(dim_z, dim_z_pose , dim_z_shape,  encoder, cfg_hrnet):
         shape_pose_encoder=PoseDecoder(dim_z, dim_z, dim_z),
         decoder=PoseSeqDecoder(dim_z_pose+dim_z_shape),
         dim_z=dim_z,
-        smpl_regressor = SMPLParamRegressor(),
+        smpl_regressor=SMPLParamRegressor(),
     )
     return model
 
@@ -209,11 +210,10 @@ class SMPLParamRegressor(torch.nn.Module):
     def __init__(self):
         super(SMPLParamRegressor, self).__init__()
         # 1723 is the number of vertices in the subsampled SMPL mesh
-        self.layers = torch.nn.Sequential(
-            FCBlock(1723 * 3, 1024),
-            FCResBlock(1024, 1024),
-            FCResBlock(1024, 1024),
-            torch.nn.Linear(1024, 24 * 3 + 10))
+        self.layers = torch.nn.Sequential(FCBlock(1723 * 3, 1024),
+                                    FCResBlock(1024, 1024),
+                                    FCResBlock(1024, 1024),
+                                    torch.nn.Linear(1024, 24 * 3 * 3 + 10))
 
     def forward(self, x):
         """Forward pass.
@@ -223,11 +223,40 @@ class SMPLParamRegressor(torch.nn.Module):
             SMPL pose parameters as rotation matrices: size = (B,24,3,3)
             SMPL shape parameters: size = (B,10)
         """
-        x = x.view(-1, 1723 * 3)
+        batch_size = x.shape[0]
+        x = x.view(batch_size, -1)
         x = self.layers(x)
-        poses = x[:, :24*3].reshape(-1, 24*3).contiguous()
-        betas = x[:, 24*3:].reshape(-1, 10).contiguous()
-        return poses, betas
+        rotmat = x[:, :24*3*3].view(-1, 24, 3, 3).contiguous()
+        betas = x[:, 24*3*3:].contiguous()
+        rotmat = rotmat.view(-1, 3, 3).contiguous()
+        # = rotmat.device
+        #if self.use_cpu_svd:
+         #   rotmat = rotmat.cpu()
+        U, _ , V = batch_svd(rotmat)
+        rotmat = torch.matmul(U, V.transpose(1,2))
+        det = torch.zeros(rotmat.shape[0], 1, 1).to(rotmat.device)
+        with torch.no_grad():
+            for i in range(rotmat.shape[0]):
+                det[i] = torch.det(rotmat[i])
+        rotmat = rotmat * det
+        rotmat = rotmat.view(batch_size, 24, 3, 3)
+        #rotmat = rotmat.to(orig_device)
+        return rotmat, betas
+
+def batch_svd(A):
+    """Wrapper around torch.svd that works when the input is a batch of matrices."""
+    U_list = []
+    S_list = []
+    V_list = []
+    for i in range(A.shape[0]):
+        U, S, V = torch.svd(A[i])
+        U_list.append(U)
+        S_list.append(S)
+        V_list.append(V)
+    U = torch.stack(U_list, dim=0)
+    S = torch.stack(S_list, dim=0)
+    V = torch.stack(V_list, dim=0)
+    return U, S, V
 
 """
 This file contains definitions of layers used as building blocks in SMPLParamRegressor
