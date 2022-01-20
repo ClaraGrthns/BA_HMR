@@ -16,4 +16,4 @@
 *.pt
 *.pickle
 **/images
-
+*.icloud
