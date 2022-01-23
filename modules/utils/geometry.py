@@ -76,7 +76,7 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         t = cam_pose[0:3,3].reshape(3)
 
         # change to mean shape if beta is too far from it
-        beta[(beta.abs() > 3).any(dim=1)] = 0.
+        beta[(beta.abs() > 4).any(dim=1)] = 0.
 
         # transform world coordinate to camera coordinate
         root_pose = pose[root_idx, :]
@@ -84,7 +84,7 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         root_pose = axangle2mat(root_pose / angle, angle)
         root_pose = torch.matmul(R, root_pose)
 
-        root_pose= rotation_matrix_to_angle_axis(root_pose[None])
+        root_pose = rotation_matrix_to_angle_axis(root_pose[None])
         pose[root_idx] = root_pose
         pose = pose.view(1, -1)
         # get mesh and joint coordinates
@@ -97,7 +97,8 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         smpl_trans = torch.matmul(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
         root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
         smpl_trans = smpl_trans - root_joint_coord + torch.matmul(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
-        return smpl_mesh_coord, smpl_trans
+
+        return smpl_mesh_coord, smpl_trans, pose
     
 def batch_rodrigues(axisang):
     # This function is borrowed from https://github.com/MandyMo/pytorch_HMR/blob/master/src/util.py#L37
