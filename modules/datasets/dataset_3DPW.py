@@ -10,7 +10,7 @@ import copy
 
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from ..utils.data_utils_3dpw import get_ids_imgspaths_seq 
-from ..utils.geometry import get_smpl_coord, world2cam
+from ..utils.geometry import get_smpl_coord_torch
 from ..smpl_model.config_smpl import *
 
 class ImageWise3DPW(torch.utils.data.Dataset):
@@ -32,7 +32,9 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.store_sequences = store_sequences
         self.store_images = False
         self.load_from_zarr = load_from_zarr
-        self.smpl = smpl
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.smpl = smpl.to(self.device)
+
  
         ids_imgpaths_seq = get_ids_imgspaths_seq(data_path=data_path,
                                                 split=self.split,
@@ -73,22 +75,15 @@ class ImageWise3DPW(torch.utils.data.Dataset):
             
         index_seq = int((img_name.split('.')[0]).split('_')[1])
         person_id = self.person_ids[index]
-        poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)    
-
         cam_pose = torch.FloatTensor(seq['cam_poses'][index_seq]) 
-        '''
-        joints_3d = seq['jointPositions'][person_id][index_seq].reshape(-1,3)
-        pelvis_3d = joints_3d[J24_NAME.index('Pelvis'), :]
-        joints_3d = joints_3d[J24_TO_J14, :]
-        joints_3d = joints_3d - pelvis_3d[None,:]
-        joints_3d = torch.FloatTensor(world2cam(joints_3d, cam_pose))
-        '''
+    
         # Resize Image to img_sizeximg_size format with padding (hrnet: 256x256)
         if self.load_from_zarr is not None:
             img_tensor = self.imgs[index] ### Read array from memory
         elif self.store_images and self.img_cache_indicator[index]:
             img_tensor = self.img_cache[index]
         else:
+            poses2d = torch.tensor(seq['poses2d'][person_id][index_seq], dtype=torch.float32)    
             img = np.array(Image.open(img_path))
             img_tensor = to_tensor(img)
             img_tensor, _ = crop_box(img_tensor=img_tensor, pose2d=poses2d)
@@ -99,20 +94,19 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
         data = {}
         data['img_path'] = img_path
-        data['img'] = img_tensor
-        data['cam_pose'] = cam_pose
+        data['img'] = img_tensor.to(self.device)
+        data['cam_pose'] = cam_pose.to(self.device)
         data['cam_intr'] = torch.tensor(seq['cam_intrinsics'])
    
-        beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10]))
-        pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq]))
-        trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq]))
-        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).to(self.device)
+        pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq])).to(self.device)
+        trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq])).to(self.device)
+        vertices, trans, pose = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
 
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
-        #data['joints_3d'] = joints_3d
         return data
     
 def get_train_val_data(data_path, 

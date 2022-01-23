@@ -23,9 +23,7 @@ class PoseNetXtreme(torch.nn.Module):
 class PoseDecoder(torch.nn.Module):
     def __init__(self, *layers):
         super(PoseDecoder, self).__init__()
-        self.layers = torch.nn.ModuleList(
-            [torch.nn.Linear(dim_in, dim_out) for dim_in, dim_out in zip(layers[:-1], layers[1:])]
-        )
+        self.layers = torch.nn.ModuleList([torch.nn.Linear(dim_in, dim_out) for dim_in, dim_out in zip(layers[:-1], layers[1:])])
         # residual layer 
         self.linear_beta = torch.nn.Linear(layers[-1], 10)
         self.linear_pose = torch.nn.Linear(layers[-1], 72)
