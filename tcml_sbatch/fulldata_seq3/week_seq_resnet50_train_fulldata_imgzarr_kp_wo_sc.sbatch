@@ -26,7 +26,7 @@
 
 
 
-#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.n..mean.%J.err
+#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.n.mean.%J.err
 # write the error output to job.*jobID*.err
 
 #SBATCH --output=jobs/seq_verts_smpl/kp_wo_sc.n.mean.%J.out
@@ -78,11 +78,12 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq3/kp_wo_sc_norm \
+"LOGGING.LOGDIR" logging/seq3/kp_wo_sc_norm_rot \
 "LOSS.KP_3D" 0.3 \
 "LOSS.VERTS_SMPL" 1. \
 "METRIC.VERTS_SMPL" 1. \
-"METRIC.SMPL" 1.
+"METRIC.SMPL" 1. \
+"LOSS.SMPL" 1. 
 
 
 echo DONE!

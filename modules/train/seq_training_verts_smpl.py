@@ -47,7 +47,7 @@ def _loop(
         prediction = model(img)
         betas_pred, poses_pred, verts_sub2_pred, verts_sub_pred, verts_full_pred  = prediction  
         # --> dim verts: (bs*seqlen)x|V|x3
-        verts_pred_smpl = smpl(beta= betas_pred, pose = poses_pred)
+        verts_pred_smpl = smpl(beta = betas_pred, pose = poses_pred)
 
         # Create Groundtruth-Mesh and downsample it
         verts_sub_gt = mesh_sampler.downsample(verts_full_gt)
@@ -60,11 +60,11 @@ def _loop(
         joints3d_pred_smpl = smpl.get_h36m_joints(verts_pred_smpl)
 
         pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
-        torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
+        #torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
 
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         pelvis_pred_smpl = joints3d_pred_smpl[:, H36M_J17_NAME.index('Pelvis'),:] 
-        torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
+        #torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
 
         #Normalize Groundtruth
         verts_sub2_gt = verts_sub2_gt - pelvis_gt[:, None, :]
@@ -75,7 +75,7 @@ def _loop(
         verts_sub2_pred = verts_sub2_pred - pelvis_pred[:, None, :]
         verts_sub_pred = verts_sub_pred - pelvis_pred[:, None, :]
         verts_full_pred = verts_full_pred - pelvis_pred[:, None, :]
-        verts_pred_smpl = verts_pred_smpl - pelvis_pred_smpl
+        verts_pred_smpl = verts_pred_smpl - pelvis_pred_smpl[:, None, :]
 
         joints3d_pred = joints3d_pred[:, H36M_J17_TO_J14,:]
         joints3d_pred = joints3d_pred - pelvis_pred[:, None, :]

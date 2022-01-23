@@ -127,7 +127,7 @@ def main(cfg, cfg_hrnet, pretrained, model):
     pprint.pprint(checkpoint['config_model']) 
     process = psutil.Process(os.getpid())
     print('datasets loaded, current memory', process.memory_info().rss/(1024*1024*1024), 'GB')
-    if model == 'img':
+    if True:
         loss_val, min_mpve = val_loop_img(model=model, 
                                     loader_val=loader_val,
                                     criterion=criterion, 
@@ -137,7 +137,7 @@ def main(cfg, cfg_hrnet, pretrained, model):
                                     log_steps=cfg.LOGGING.LOG_STEPS, 
                                     device=device,
                                     smpl=smpl,
-                                    scale = scale)
+                                    scale = False)
     else:
         mesh_sampler = Mesh()
         loss_val, min_mpve = val_loop_seq(model=model, 
@@ -150,7 +150,7 @@ def main(cfg, cfg_hrnet, pretrained, model):
                                     device=device,
                                     smpl=smpl,
                                     mesh_sampler=mesh_sampler,
-                                    scale = scale)
+                                    scale = False)
 
     print(f'Epoch 0: Loss Val: {loss_val}, min mpve: {min_mpve}')
 

@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=res50-wokp
+#SBATCH --job-name=kp_sc
 
 #resources:
 
@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/train/wo_kp_wo_sc_new.%J.err
+#SBATCH --error=jobs/train/kp_sc_new.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/train/wo_kp_wo_sc_new.%J.out
+#SBATCH --output=jobs/train/kp_sc_new.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -43,6 +43,7 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
+Datum 22 01 22 with smpl metric
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
@@ -68,7 +69,7 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_fulldata.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/fulldataset_zarr_resnet34_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/fulldata/resnet50/wo_kp_wo_sc \
+'OUT_DIR' ./checkpoints/fulldata/resnet50/kp_scale \
 "H36M.LOAD_DATALIST.TRN" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_DATALIST.VAL" /scratch/$SLURM_JOB_ID/datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
@@ -77,8 +78,10 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/fulldata_resnet50/wo_kp_wo_sc_new \
+"LOGGING.LOGDIR" logging/fulldata_resnet50/kp_sc_new \
 "MODEL.ENCODER" resnet50 \
+"LOSS.KP_3D" 0.3 \
+"TRAIN.SCALE" True \
 "METRIC.SMPL" 1. \
 
 

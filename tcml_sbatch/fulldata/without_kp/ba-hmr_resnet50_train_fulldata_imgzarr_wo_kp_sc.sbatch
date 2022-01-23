@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/train/wo_kp_sc.%J.err
+#SBATCH --error=jobs/train/wo_kp_sc_new.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/train/wo_kp_sc.%J.out
+#SBATCH --output=jobs/train/wo_kp_sc_new.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -43,6 +43,7 @@
 ####
 #b) copy all needed data to the jobs scratch folder
 ####
+Date: 22 1 22 with metrix smpl 
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
@@ -77,9 +78,10 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.TRN" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_IDS_IMGPATHS_SEQ.VAL" /scratch/$SLURM_JOB_ID/ids_imgpaths_seq/ids_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M  \
-"LOGGING.LOGDIR" logging/fulldataset_zarr_resnet50/wo_kp_scale \
+"LOGGING.LOGDIR" logging/fulldata_resnet50/wo_kp_sc_new \
 "MODEL.ENCODER" resnet50 \
 "TRAIN.SCALE" True \
+"METRIC.SMPL" 1. \
 
 
 

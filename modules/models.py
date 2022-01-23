@@ -234,11 +234,11 @@ class SMPLParamRegressor(torch.nn.Module):
          #   rotmat = rotmat.cpu()
         U, _ , V = batch_svd(rotmat)
         rotmat = torch.matmul(U, V.transpose(1,2))
-        det = torch.zeros(rotmat.shape[0], 1, 1).to(rotmat.device)
+        '''det = torch.zeros(rotmat.shape[0], 1, 1).to(rotmat.device)
         with torch.no_grad():
             for i in range(rotmat.shape[0]):
                 det[i] = torch.det(rotmat[i])
-        rotmat = rotmat * det
+        rotmat = rotmat * det'''
         rotmat = rotmat.view(batch_size, 24, 3, 3)
         #rotmat = rotmat.to(orig_device)
         return rotmat, betas
