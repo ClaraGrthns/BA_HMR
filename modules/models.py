@@ -227,14 +227,6 @@ class SMPLParamRegressor(torch.nn.Module):
         rotmat = rotmat.view(-1, 3, 3).contiguous()
         U, _ , V = torch.linalg.svd(rotmat)
         rotmat = torch.matmul(U, V.transpose(1,2))
-<<<<<<< HEAD
-        '''det = torch.zeros(rotmat.shape[0], 1, 1).to(rotmat.device)
-        with torch.no_grad():
-            for i in range(rotmat.shape[0]):
-                det[i] = torch.det(rotmat[i])
-        rotmat = rotmat * det'''
-=======
->>>>>>> 6034b46770d009d779e3730833381d7dd23abe1c
         rotmat = rotmat.view(batch_size, 24, 3, 3)
         return rotmat, betas
 

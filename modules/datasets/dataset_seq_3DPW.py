@@ -11,7 +11,7 @@ import copy
 
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from ..utils.data_utils_3dpw import get_chunks_img_paths_list_seq
-from ..utils.geometry import get_smpl_coord, world2cam
+from ..utils.geometry import get_smpl_coord_torch, world2cam
 from ..smpl_model.config_smpl import *
 
 class SequenceWise3DPW(torch.utils.data.Dataset):
@@ -108,12 +108,10 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]).to(self.device)
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
-        #for idx, (beta, pose, trans, joints_3d, cam_pose) in enumerate(zip(betas, poses, transs, joints_3d_list, cam_poses)):
-            verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
+            verts, trans, pose = get_smpl_coord_torch(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
-            #joints_3d_list[idx] = torch.FloatTensor(world2cam(joints_3d, cam_pose))
 
         data = {}
         data['img_paths'] = img_paths

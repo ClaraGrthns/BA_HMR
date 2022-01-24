@@ -26,10 +26,10 @@
 
 
 
-#SBATCH --error=jobs/seq_verts_smpl/kp_wo_sc.n.mean.%J.err
+#SBATCH --error=jobs/seq_verts_smpl/kp_smpl.%J.err
 # write the error output to job.*jobID*.err
 
-#SBATCH --output=jobs/seq_verts_smpl/kp_wo_sc.n.mean.%J.out
+#SBATCH --output=jobs/seq_verts_smpl/kp_smpl.%J.out
 # write the standard output to job.*jobID*.out
 
 #SBATCH --mail-type=ALL
@@ -70,7 +70,7 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 /home/grotehans/miniconda3/envs/ba-env/bin/python -u /home/grotehans/BA_HMR/start_train_seq_fulldata4.py \
 --cfg /home/grotehans/BA_HMR/configs/experiments/seq_zarr_resnet50_ep50.yaml \
 --opts "DATASETS.THREEDPW" /scratch/$SLURM_JOB_ID/3DPW/ \
-'OUT_DIR' ./checkpoints/seq3/kp_wo_sc \
+'OUT_DIR' ./checkpoints/seq3/kp_smpl \
 "H36M.LOAD_SEQ_DATALIST.TRN" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_1to8subj.pickle \
 "H36M.LOAD_SEQ_DATALIST.VAL" /scratch/$SLURM_JOB_ID/seq_datalist_h36m_thr25_9to11subj.pickle \
 "H36M.LOAD_FROM_ZARR" /scratch/$SLURM_JOB_ID/H36M/img_zarr/imgs_h36m_resnet_thr25 \
@@ -79,7 +79,7 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "THREEDPW.LOAD_CHUNKS_SEQ.TRN" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_train_min8_kps.pickle \
 "THREEDPW.LOAD_CHUNKS_SEQ.VAL" /scratch/$SLURM_JOB_ID/img_seqs_list_paths_seq/img_seqs_list_paths_seq_validation_min8_kps.pickle \
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
-"LOGGING.LOGDIR" logging/seq3/kp_wo_sc_norm_rot \
+"LOGGING.LOGDIR" logging/seq3/kp_smpl \
 "LOSS.KP_3D" 0.3 \
 "LOSS.VERTS_SMPL" 1. \
 "METRIC.VERTS_SMPL" 1. \

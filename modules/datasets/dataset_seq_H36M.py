@@ -12,7 +12,7 @@ import copy
 
 from ..utils.image_utils import to_tensor, transform, transform_visualize, crop_box
 from ..utils.data_utils_h36m import get_data_chunk_list_h36m, get_background
-from ..utils.geometry import get_smpl_coord
+from ..utils.geometry import get_smpl_coord_torch
 
 
 class SequenceWiseH36M(torch.utils.data.Dataset):
@@ -111,7 +111,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
 
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
-            verts, trans, pose = get_smpl_coord(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
+            verts, trans, pose = get_smpl_coord_torch(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
@@ -126,7 +126,6 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         data['vertices'] = vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = cam_intr
-        #data['joints_3d'] = joints_3d
         return data
    
     def set_chunks(self):
