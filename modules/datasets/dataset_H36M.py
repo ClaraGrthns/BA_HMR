@@ -10,7 +10,7 @@ import os, psutil
 from ..utils.data_utils_h36m import get_data_list_h36m, get_background
 from ..utils.image_utils import to_tensor, transform
 from ..smpl_model.smpl_pose2mesh import SMPL
-from ..utils.geometry import get_smpl_coord
+from ..utils.geometry import get_smpl_coord_torch
 
 class ImageWiseH36M(torch.utils.data.Dataset):
     def __init__(self,
@@ -31,7 +31,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.load_from_zarr = load_from_zarr
         self.backgrounds = backgrounds
         self.fitting_thr = fitting_thr  # milimeter --> Threshhold joints from smpl mesh to h36m gt
-        self.smpl = smpl
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.smpl = smpl.to(self.device)
         self.mask = mask
         self.store_images = False
         self.subject_list = subject_list
@@ -98,12 +99,11 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         beta = item['betas'].to(self.device)
         pose = item['poses'].to(self.device)
         trans = item['trans'].to(self.device)
-        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices, trans, pose = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
-        #data['joints_3d'] = item['joints_3d']/1000
         return data
 
         

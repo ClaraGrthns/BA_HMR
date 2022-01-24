@@ -35,7 +35,8 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         self.annot_dir = osp.join(data_path,'annotations')
         self.load_from_zarr = load_from_zarr
         self.backgrounds = backgrounds
-        self.smpl = smpl
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.smpl = smpl.to(self.device)
         self.mask = mask
         self.store_images = store_images
         self.len_chunks = len_chunks
@@ -94,13 +95,12 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
                 self.img_cache[zarr_ids[idx]] = img_tensor
                 self.img_cache_indicator[zarr_ids[idx]] = True
     
-        poses = torch.empty((0, 72), dtype=torch.float32)
-        betas = torch.empty((0, 10), dtype=torch.float32)
-        transs = torch.empty((0, 3), dtype=torch.float32)
-        #joints_3d = torch.empty((0, 14, 3), dtype=torch.float32)
-        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32)
+        poses = torch.empty((0, 72), dtype=torch.float32).to(self.device)
+        betas = torch.empty((0, 10), dtype=torch.float32).to(self.device)
+        transs = torch.empty((0, 3), dtype=torch.float32).to(self.device)
+        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32).to(self.device)
 
-        cam_poses = torch.empty((0, 4, 4), dtype=torch.float32)
+        cam_poses = torch.empty((0, 4, 4), dtype=torch.float32).to(self.device)
         cam_intr = torch.FloatTensor(chunk[0]['cam_intr'])
 
         for item in chunk:
@@ -108,7 +108,6 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             betas = torch.cat((betas, item['betas'][None]), 0)
             transs = torch.cat((transs,item['trans']), 0)
             cam_poses = torch.cat((cam_poses, item['cam_pose'][None]),0)
-            #joints_3d = torch.cat((joints_3d, item['joints_3d'][None]))
 
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
@@ -116,10 +115,11 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             vertices[idx]= verts
             poses[idx]=pose
             transs[idx] = trans
+            
         betas = torch.mean(betas.view(-1, betas.shape[1]), dim=0)
         data = {}
         data['img_paths'] = img_paths
-        data['imgs'] = imgs_tensor
+        data['imgs'] = imgs_tensor.to(self.device)
         data['betas'] = betas.expand(self.len_chunks, -1)
         data['poses'] = poses
         data['trans'] = transs

@@ -35,7 +35,8 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         self.store_images = store_images
         self.load_from_zarr = load_from_zarr
         self.len_chunks = len_chunks
-        self.smpl = smpl
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.smpl = smpl.to(self.device)
 
         chunks, img_seqs_list, img_paths, sequences = get_chunks_img_paths_list_seq(data_path=data_path,
                                                                 split=self.split,
@@ -98,17 +99,13 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                     self.img_cache[img_indices[idx]] = img_tensor
                     self.img_cache_indicator[img_indices[idx]] = True
             
-        '''joints_3d_list = copy.deepcopy(torch.tensor(seq['jointPositions'][person_id][seq_indices], dtype=torch.float32)).reshape(-1, 24, 3)   
-        pelvis_3d = joints_3d_list[:, J24_NAME.index('Pelvis'), :]    
-        joints_3d_list = joints_3d_list[:, J24_TO_J14, :]
-        joints_3d_list = joints_3d_list - pelvis_3d[:, None,:]'''
 
-        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1)
-        poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])) 
-        transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
-        vertices = torch.zeros(8, 6890, 3, dtype=torch.float32)
+        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1).to(self.device)
+        poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])).to(self.device)
+        transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices])).to(self.device)
+        vertices = torch.zeros(8, 6890, 3, dtype=torch.float32).to(self.device)
 
-        cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]) 
+        cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]).to(self.device)
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
         #for idx, (beta, pose, trans, joints_3d, cam_pose) in enumerate(zip(betas, poses, transs, joints_3d_list, cam_poses)):
@@ -120,15 +117,13 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
 
         data = {}
         data['img_paths'] = img_paths
-        data['imgs'] = imgs_tensor
+        data['imgs'] = imgs_tensor.to(self.device)
         data['betas'] = betas
         data['poses'] = poses
         data['trans'] = transs
         data['vertices']= vertices
         data['cam_pose'] = cam_poses
         data['cam_intr'] = torch.FloatTensor(seq['cam_intrinsics'])
-        #data['joints_3d'] = joints_3d_list
-
         return data  
 
     def set_chunks(self):

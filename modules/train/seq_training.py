@@ -31,11 +31,9 @@ def _loop(
 
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
-        img = batch["imgs"].to(device)
-        betas_gt = batch["betas"].to(device)
-        poses_gt = batch["poses"].to(device)
-        #joints3d_gt = batch['joints_3d'].to(device)
-        #joints3d_gt = joints3d_gt.reshape(-1, joints3d_gt.shape[-2], joints3d_gt.shape[-1])
+        img = batch["imgs"]#.to(device)
+        betas_gt = batch["betas"]#.to(device)
+        poses_gt = batch["poses"]#.to(device)
         verts_full_gt = batch["vertices"].to(device)
         verts_full_gt = verts_full_gt.reshape(-1, verts_full_gt.shape[-2], verts_full_gt.shape[-1])
 
