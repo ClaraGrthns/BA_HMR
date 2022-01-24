@@ -10,7 +10,7 @@ import os, psutil
 from ..utils.data_utils_h36m import get_data_list_h36m, get_background
 from ..utils.image_utils import to_tensor, transform
 from ..smpl_model.smpl_pose2mesh import SMPL
-from ..utils.geometry import get_smpl_coord
+from ..utils.geometry import get_smpl_coord_torch
 
 class ImageWiseH36M(torch.utils.data.Dataset):
     def __init__(self,
@@ -98,7 +98,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         beta = item['betas'].to(self.device)
         pose = item['poses'].to(self.device)
         trans = item['trans'].to(self.device)
-        vertices, trans, pose = get_smpl_coord(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
+        vertices, trans, pose = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
         data['betas'] = beta
         data['poses'] = pose
         data['trans'] = trans

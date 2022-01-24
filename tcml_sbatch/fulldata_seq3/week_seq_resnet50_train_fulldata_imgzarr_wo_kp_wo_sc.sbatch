@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s3_wo_kp_wp_sc
+#SBATCH --job-name=s3_rot_mat
 
 #resources:
 
@@ -44,7 +44,8 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 echo with mean shape!
-echo date 17 01 22
+echo without norm on rotation matrix
+echo date 24 01 22
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
