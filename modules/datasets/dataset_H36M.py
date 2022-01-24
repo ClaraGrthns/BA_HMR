@@ -31,7 +31,8 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.load_from_zarr = load_from_zarr
         self.backgrounds = backgrounds
         self.fitting_thr = fitting_thr  # milimeter --> Threshhold joints from smpl mesh to h36m gt
-        self.smpl = smpl
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.smpl = smpl.to(self.device)
         self.mask = mask
         self.store_images = False
         self.subject_list = subject_list
@@ -103,7 +104,6 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         data['poses'] = pose
         data['trans'] = trans
         data['vertices'] = vertices
-        #data['joints_3d'] = item['joints_3d']/1000
         return data
 
         
