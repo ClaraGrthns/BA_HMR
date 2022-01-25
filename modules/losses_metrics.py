@@ -4,7 +4,7 @@ from .utils.geometry import batch_rodrigues
 
 BETA_WEIGHTS = torch.FloatTensor([0.5045, 0.1355, 0.0959, 0.0678, 0.0430, 0.0397, 0.0376, 0.0281, 0.0258, 0.0223])
 
-def criterion_smpl1(param_pred, param_gt):
+def criterion_smpl(param_pred, param_gt):
     betas_pred, poses_pred = param_pred
     betas_gt, poses_gt = param_gt
     betas_pred = betas_pred.reshape(-1,10)

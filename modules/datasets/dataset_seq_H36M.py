@@ -95,12 +95,11 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
                 self.img_cache[zarr_ids[idx]] = img_tensor
                 self.img_cache_indicator[zarr_ids[idx]] = True
     
-        poses = torch.empty((0, 72), dtype=torch.float32).to(self.device)
-        betas = torch.empty((0, 10), dtype=torch.float32).to(self.device)
-        transs = torch.empty((0, 3), dtype=torch.float32).to(self.device)
-        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32).to(self.device)
-
-        cam_poses = torch.empty((0, 4, 4), dtype=torch.float32).to(self.device)
+        poses = torch.empty((0, 72), dtype=torch.float32)
+        betas = torch.empty((0, 10), dtype=torch.float32)
+        transs = torch.empty((0, 3), dtype=torch.float32)
+        vertices = torch.zeros(self.len_chunks, 6890, 3, dtype=torch.float32)
+        cam_poses = torch.empty((0, 4, 4), dtype=torch.float32)
         cam_intr = torch.FloatTensor(chunk[0]['cam_intr'])
 
         for item in chunk:
@@ -109,8 +108,13 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             transs = torch.cat((transs,item['trans']), 0)
             cam_poses = torch.cat((cam_poses, item['cam_pose'][None]),0)
 
+        poses = poses.to(self.device)
+        betas = betas.to(self.device)
+        transs = transs.to(self.device)
+        cam_poses = cam_poses.to(self.device)
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
+            print(beta.device, pose.device, trans.device, cam_pose.device)
             verts, trans, pose = get_smpl_coord_torch(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose

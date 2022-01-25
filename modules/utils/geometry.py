@@ -69,6 +69,7 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
 
 def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
+        print(pose.device, beta.device, trans.device, cam_pose.device)
         pose = pose.view(-1, 3)
         beta = beta.view(1, -1)
         # camera rotation and translation
@@ -82,9 +83,13 @@ def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
         root_pose = pose[root_idx, :]
         angle = torch.linalg.norm(root_pose)
         root_pose = axangle2mat(root_pose / angle, angle)
+        print(root_pose.device)
+        root_pose  = root_pose.to('cuda')
         root_pose = torch.matmul(R, root_pose)
 
         root_pose = rotation_matrix_to_angle_axis(root_pose[None])
+        
+        print(root_pose.device)
         pose[root_idx] = root_pose
         pose = pose.view(1, -1)
         # get mesh and joint coordinates
