@@ -68,42 +68,37 @@ def get_smpl_coord(pose, beta, trans, root_idx, cam_pose, smpl):
         return smpl_mesh_coord, smpl_trans, pose
 
 def get_smpl_coord_torch(pose, beta, trans, root_idx, cam_pose, smpl):
-        # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
-        print(pose.device, beta.device, trans.device, cam_pose.device)
-        pose = pose.view(-1, 3)
-        beta = beta.view(1, -1)
-        # camera rotation and translation
-        R = cam_pose[:3, :3].reshape(3, 3)
-        t = cam_pose[0:3,3].reshape(3)
+    # smpl parameters (pose: 1x72 dimension, shape: 1x10 dimension, trans: 1x3)
+    pose = pose.view(-1, 3)
+    beta = beta.view(1, -1)
+    # camera rotation and translation
+    R = cam_pose[:3, :3].reshape(3, 3)
+    t = cam_pose[0:3,3].reshape(3)
 
-        # change to mean shape if beta is too far from it
-        beta[(beta.abs() > 4).any(dim=1)] = 0.
+    # change to mean shape if beta is too far from it
+    beta[(beta.abs() > 4).any(dim=1)] = 0.
 
-        # transform world coordinate to camera coordinate
-        root_pose = pose[root_idx, :]
-        angle = torch.linalg.norm(root_pose)
-        root_pose = axangle2mat(root_pose / angle, angle)
-        print(root_pose.device)
-        root_pose  = root_pose.to('cuda')
-        root_pose = torch.matmul(R, root_pose)
+    # transform world coordinate to camera coordinate
+    root_pose = pose[root_idx, :]
+    angle = torch.linalg.norm(root_pose)
+    root_pose = axangle2mat(root_pose / angle, angle)
+    root_pose = torch.matmul(R, root_pose)
+    root_pose = rotation_matrix_to_angle_axis(root_pose[None])
+    pose[root_idx] = root_pose
+    pose = pose.view(1, -1)
 
-        root_pose = rotation_matrix_to_angle_axis(root_pose[None])
-        
-        print(root_pose.device)
-        pose[root_idx] = root_pose
-        pose = pose.view(1, -1)
-        # get mesh and joint coordinates
-        smpl_mesh_coord, smpl_joint_coord = smpl(pose, beta)
+    # get mesh and joint coordinates
+    smpl_mesh_coord, smpl_joint_coord = smpl(pose, beta)
+    smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord).reshape(-1, 3)
+    smpl_joint_coord = torch.FloatTensor(smpl_joint_coord).reshape(-1, 3)
 
-        smpl_mesh_coord = torch.FloatTensor(smpl_mesh_coord).reshape(-1, 3)
-        smpl_joint_coord = torch.FloatTensor(smpl_joint_coord).reshape(-1, 3)
-        # compenstate rotation (translation from origin to root joint was not cancled)
-        smpl_trans = trans.reshape(3)  # translation vector from smpl coordinate to h36m world coordinate
-        smpl_trans = torch.matmul(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
-        root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
-        smpl_trans = smpl_trans - root_joint_coord + torch.matmul(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
+    # compenstate rotation (translation from origin to root joint was not cancled)
+    smpl_trans = trans.reshape(3)  # translation vector from smpl coordinate to h36m world coordinate
+    smpl_trans = torch.matmul(R, smpl_trans[:, None]).reshape(1, 3) + t.reshape(1, 3)
+    root_joint_coord = smpl_joint_coord[root_idx].reshape(1, 3)
+    smpl_trans = smpl_trans - root_joint_coord + torch.matmul(R, root_joint_coord.transpose(1, 0)).transpose(1, 0)
 
-        return smpl_mesh_coord, smpl_trans, pose
+    return smpl_mesh_coord, smpl_trans, pose
     
 def batch_rodrigues(axisang):
     # This function is borrowed from https://github.com/MandyMo/pytorch_HMR/blob/master/src/util.py#L37

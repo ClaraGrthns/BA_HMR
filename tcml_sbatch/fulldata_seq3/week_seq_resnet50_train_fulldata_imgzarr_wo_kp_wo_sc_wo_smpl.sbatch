@@ -17,7 +17,7 @@
 #SBATCH --mem-per-cpu=26G
 # the job will need 12GB of memory equally distributed on 4 cpus.  (251GB are available in total on one node)
 
-#SBATCH --gres=gpu:1080ti:1
+#SBATCH --gres=gpu:1
 #the job can use and see 1 GPUs (4 GPUs are available in total on one node)
 
 #SBATCH --time=7-00
@@ -44,7 +44,7 @@
 #b) copy all needed data to the jobs scratch folder
 ####
 echo with mean shape!
-echo date 23 01 22
+echo date 25 01 22
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!
@@ -80,8 +80,10 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
 "LOGGING.LOGDIR" logging/seq3/wo_kp_wo_smpl \
 "MODEL.ENCODER" resnet50 \
+"LOSS.VERTS_SMPL" 1.  \
 "METRIC.VERTS_SMPL" 1. \
-"METRIC.SMPL" 1. \
+"METRIC.SMPL" 0. \
+"LOSS.SMPL" 0.
 
 
 echo DONE!

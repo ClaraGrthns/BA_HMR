@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s3_rot_mat
+#SBATCH --job-name=kp_smpl
 
 #resources:
 

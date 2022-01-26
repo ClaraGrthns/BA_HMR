@@ -33,7 +33,7 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         self.store_images = False
         self.load_from_zarr = load_from_zarr
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.smpl = smpl.to(self.device)
+        self.smpl = smpl
 
  
         ids_imgpaths_seq = get_ids_imgspaths_seq(data_path=data_path,
@@ -94,13 +94,13 @@ class ImageWise3DPW(torch.utils.data.Dataset):
         
         data = {}
         data['img_path'] = img_path
-        data['img'] = img_tensor.to(self.device)
-        data['cam_pose'] = cam_pose.to(self.device)
+        data['img'] = img_tensor
+        data['cam_pose'] = cam_pose
         data['cam_intr'] = torch.tensor(seq['cam_intrinsics'])
    
-        beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).to(self.device)
-        pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq])).to(self.device)
-        trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq])).to(self.device)
+        beta = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10]))
+        pose = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][index_seq]))
+        trans = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][index_seq]))
         vertices, trans, pose = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
 
         data['betas'] = beta

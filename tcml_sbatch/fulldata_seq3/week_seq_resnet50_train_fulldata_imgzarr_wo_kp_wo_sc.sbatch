@@ -4,7 +4,7 @@
 #a) Define slurm job parameters
 ####
 
-#SBATCH --job-name=s3_rot_mat
+#SBATCH --job-name=wo_kp_smpl
 
 #resources:
 
@@ -45,7 +45,7 @@
 ####
 echo with mean shape!
 echo without norm on rotation matrix
-echo date 24 01 22
+echo date 25 01 22
 mkdir /scratch/$SLURM_JOB_ID/H36M
 cp -r /home/grotehans/H36M/img_zarr /scratch/$SLURM_JOB_ID/H36M/
 echo copied h36m image zarr!

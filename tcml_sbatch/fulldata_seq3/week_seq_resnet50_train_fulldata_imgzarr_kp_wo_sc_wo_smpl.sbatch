@@ -80,8 +80,11 @@ singularity exec --nv /common/singularityImages/TCML-Cuda11_2_TF2_6_0_PT_1_10_0.
 "DATASETS.H36M" /scratch/$SLURM_JOB_ID/H36M \
 "LOGGING.LOGDIR" logging/seq3/kp_wo_smpl \
 "LOSS.KP_3D" 0.3 \
+"MODEL.ENCODER" resnet50 \
+"LOSS.VERTS_SMPL" 1.  \
 "METRIC.VERTS_SMPL" 1. \
-"METRIC.SMPL" 1. \
+"METRIC.SMPL" 0. \
+"LOSS.SMPL" 0.
 
 echo DONE!
 

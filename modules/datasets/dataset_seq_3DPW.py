@@ -36,7 +36,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
         self.load_from_zarr = load_from_zarr
         self.len_chunks = len_chunks
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.smpl = smpl.to(self.device)
+        self.smpl = smpl
 
         chunks, img_seqs_list, img_paths, sequences = get_chunks_img_paths_list_seq(data_path=data_path,
                                                                 split=self.split,
@@ -100,12 +100,12 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
                     self.img_cache_indicator[img_indices[idx]] = True
             
 
-        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1).to(self.device)
-        poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices])).to(self.device)
-        transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices])).to(self.device)
-        vertices = torch.zeros(8, 6890, 3, dtype=torch.float32).to(self.device)
+        betas = copy.deepcopy(torch.FloatTensor(seq['betas'][person_id][:10])).expand(8, -1)
+        poses = copy.deepcopy(torch.FloatTensor(seq['poses'][person_id][seq_indices]))
+        transs = copy.deepcopy(torch.FloatTensor(seq['trans'][person_id][seq_indices]))
+        vertices = torch.zeros(8, 6890, 3, dtype=torch.float32)
 
-        cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices]).to(self.device)
+        cam_poses = torch.FloatTensor(seq['cam_poses'][seq_indices])
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
             verts, trans, pose = get_smpl_coord_torch(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
@@ -115,7 +115,7 @@ class SequenceWise3DPW(torch.utils.data.Dataset):
 
         data = {}
         data['img_paths'] = img_paths
-        data['imgs'] = imgs_tensor.to(self.device)
+        data['imgs'] = imgs_tensor
         data['betas'] = betas
         data['poses'] = poses
         data['trans'] = transs

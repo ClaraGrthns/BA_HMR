@@ -31,10 +31,10 @@ def _loop(
 
     print(f'start {name} loop!')
     for i, batch in tqdm(enumerate(loader), total = len(loader), desc= f'Epoch {epoch}: {name}-loop'):
-        img = batch["imgs"]#.to(device)
-        betas_gt = batch["betas"]#.to(device)
-        poses_gt = batch["poses"]#.to(device)
-        verts_full_gt = batch["vertices"]#.to(device)
+        img = batch["imgs"].to(device)
+        betas_gt = batch["betas"].to(device)
+        poses_gt = batch["poses"].to(device)
+        verts_full_gt = batch["vertices"].to(device)
         verts_full_gt = verts_full_gt.reshape(-1, verts_full_gt.shape[-2], verts_full_gt.shape[-1])
 
         # zero the parameter gradients
@@ -58,11 +58,10 @@ def _loop(
         joints3d_pred_smpl = smpl.get_h36m_joints(verts_pred_smpl)
 
         pelvis_gt = joints3d_smpl_gt[:, H36M_J17_NAME.index('Pelvis'),:]
-        #torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
-
         pelvis_pred = joints3d_pred[:, H36M_J17_NAME.index('Pelvis'),:] 
         pelvis_pred_smpl = joints3d_pred_smpl[:, H36M_J17_NAME.index('Pelvis'),:] 
         #torso_pred = joints3d_pred[:, H36M_J17_NAME.index('Torso'),:]
+        #torso_gt = joints3d_smpl_gt[:,H36M_J17_NAME.index('Torso'),:]
 
         #Normalize Groundtruth
         verts_sub2_gt = verts_sub2_gt - pelvis_gt[:, None, :]
@@ -95,12 +94,6 @@ def _loop(
             joints3d_pred = joints3d_pred/scale_pred
             joints3d_smpl_gt = joints3d_smpl_gt/scale_smpl_gt
 
-            '''# Scale Joints with Left and Right Hip
-            scale_gt = torch.torch.linalg.vector_norm((joints3d_gt[:, 2,:]-joints3d_gt[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
-            scale_pred = torch.torch.linalg.vector_norm((joints3d_pred[:, 2,:]-joints3d_pred[:, 3,:]), dim=-1, keepdim=True)[:, None, :]
-            joints3d_gt = joints3d_gt/scale_gt
-            joints3d_pred = joints3d_pred/scale_pred'''
-
         # List of Preds and Targets for smpl-params, verts, (2d-keypoints and 3d-keypoints)
         preds = {"SMPL": (betas_pred, poses_pred), "VERTS_SUB2": verts_sub2_pred , "VERTS_SUB": verts_sub_pred, "VERTS_FULL": verts_full_pred, "KP_3D": joints3d_pred, "VERTS_SMPL": verts_pred_smpl}
         targets = {"SMPL": (betas_gt, poses_gt), "VERTS_SUB2": verts_sub2_gt, "VERTS_SUB": verts_sub_gt, "VERTS_FULL": verts_full_gt, "KP_3D": joints3d_smpl_gt, "VERTS_SMPL": verts_full_gt}
@@ -108,10 +101,11 @@ def _loop(
         #### Losses: Maps keys to losses: loss_smpl, loss_verts, (loss_kp_2d, loss_kp_3d) ####
         loss_batch = 0
         for loss_key in criterion.keys():
-            loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
-            loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
-            running_loss[loss_key] += loss.item()
-            epoch_loss += loss_batch.item()
+            if criterion[loss_key][0] != 0: 
+                loss = criterion[loss_key][0](preds[loss_key], targets[loss_key]) 
+                loss_batch += loss * criterion[loss_key][1] # add weighted loss to total loss of batch
+                running_loss[loss_key] += loss.item()
+                epoch_loss += loss_batch.item()
         
         if train:
             # backward

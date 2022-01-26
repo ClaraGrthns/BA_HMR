@@ -36,7 +36,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         self.load_from_zarr = load_from_zarr
         self.backgrounds = backgrounds
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.smpl = smpl.to(self.device)
+        self.smpl = smpl
         self.mask = mask
         self.store_images = store_images
         self.len_chunks = len_chunks
@@ -108,13 +108,12 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
             transs = torch.cat((transs,item['trans']), 0)
             cam_poses = torch.cat((cam_poses, item['cam_pose'][None]),0)
 
-        poses = poses.to(self.device)
-        betas = betas.to(self.device)
-        transs = transs.to(self.device)
-        cam_poses = cam_poses.to(self.device)
+        poses = poses
+        betas = betas
+        transs = transs
+        cam_poses = cam_poses
 
         for idx, (beta, pose, trans, cam_pose) in enumerate(zip(betas, poses, transs, cam_poses)):
-            print(beta.device, pose.device, trans.device, cam_pose.device)
             verts, trans, pose = get_smpl_coord_torch(pose=pose[None], beta=beta[None], trans=trans[None], root_idx=0, cam_pose=cam_pose, smpl=self.smpl)
             vertices[idx]= verts
             poses[idx]=pose
@@ -123,7 +122,7 @@ class SequenceWiseH36M(torch.utils.data.Dataset):
         betas = torch.mean(betas.view(-1, betas.shape[1]), dim=0)
         data = {}
         data['img_paths'] = img_paths
-        data['imgs'] = imgs_tensor.to(self.device)
+        data['imgs'] = imgs_tensor
         data['betas'] = betas.expand(self.len_chunks, -1)
         data['poses'] = poses
         data['trans'] = transs

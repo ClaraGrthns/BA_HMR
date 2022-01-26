@@ -32,7 +32,7 @@ class ImageWiseH36M(torch.utils.data.Dataset):
         self.backgrounds = backgrounds
         self.fitting_thr = fitting_thr  # milimeter --> Threshhold joints from smpl mesh to h36m gt
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.smpl = smpl.to(self.device)
+        self.smpl = smpl
         self.mask = mask
         self.store_images = False
         self.subject_list = subject_list
@@ -93,12 +93,12 @@ class ImageWiseH36M(torch.utils.data.Dataset):
                 self.img_cache_indicator[index] = True
         data = {}
         data['img_path'] = img_path
-        data['img'] = img_tensor.to(self.device)
-        data['cam_pose'] = item['cam_pose'].to(self.device)
+        data['img'] = img_tensor
+        data['cam_pose'] = item['cam_pose']
         data['cam_intr'] = item['cam_intr']
-        beta = item['betas'].to(self.device)
-        pose = item['poses'].to(self.device)
-        trans = item['trans'].to(self.device)
+        beta = item['betas']
+        pose = item['poses']
+        trans = item['trans']
         vertices, trans, pose = get_smpl_coord_torch(pose=pose, beta=beta, trans=trans, root_idx=0, cam_pose=data['cam_pose'], smpl=self.smpl)
         data['betas'] = beta
         data['poses'] = pose
