@@ -77,7 +77,7 @@ class PoseSeqNetXtreme4(torch.nn.Module):
         z = torch.cat((betas, poses), dim=-1)
 
         verts_sub2, verts_sub, verts_full = self.decoder(z)
-        poses, betas = self.smpl_regressor(verts_sub.reshape(seq_len*batch_size, -1))
+        poses, betas = self.smpl_regressor(verts_full.reshape(seq_len*batch_size, -1))
 
         betas = betas.reshape(batch_size, seq_len, -1) 
         betas = torch.mean(betas, dim=1, keepdim=True).expand(-1, seq_len, -1)
@@ -207,7 +207,7 @@ class SMPLParamRegressor(torch.nn.Module):
     def __init__(self):
         super(SMPLParamRegressor, self).__init__()
         # 1723 is the number of vertices in the subsampled SMPL mesh
-        self.layers = torch.nn.Sequential(FCBlock(1723 * 3, 1024),
+        self.layers = torch.nn.Sequential(FCBlock(6890 * 3, 1024),
                                     FCResBlock(1024, 1024),
                                     FCResBlock(1024, 1024),
                                     torch.nn.Linear(1024, 24 * 3 * 3 + 10))
