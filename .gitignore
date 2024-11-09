@@ -18,3 +18,4 @@
 **/images
 *.icloud
 data/*
+tcml_sbatch/*
