@@ -1,4 +1,9 @@
 # BA-HMR
+
+Code-base of my Bachelor Thesis Project of "Predicting 3D-Human Meshes from RGB images - a parametric and non parametric approach". 
+Supervisor: Prof. Andreas Schilling, University of Tübingen, Visual Computation
+
+
 ### Requirements 
 - Python 3.9.5
 - Pytorch 1.9.0
