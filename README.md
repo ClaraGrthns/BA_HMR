@@ -1,6 +1,6 @@
-# BA-HMR
+# Predicting 3D-Human Meshes from RGB images - a parametric and non parametric approach
 
-Code-base of my Bachelor Thesis Project of "Predicting 3D-Human Meshes from RGB images - a parametric and non parametric approach". 
+Codebase of my Bachelor Thesis Project of "Predicting 3D-Human Meshes from RGB images - a parametric and non parametric approach". 
 Supervisor: Prof. Andreas Schilling, University of Tübingen, Visual Computation
 
 
