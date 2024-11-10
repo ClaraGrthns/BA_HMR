@@ -15,11 +15,12 @@ $ pip install -r requirements.txt
 
 ## Start Training:
 ### Model 1: Parametric Model
-
+![Alt text](grafics/Model1.png)
 ```console
 $ python start_train_fulldata_param.py --cfg ./configs/experiments/seq_zarr_resnet34_ep50.yaml
 ```
 ### Model 2.1: Non-Parametric Model
+![Alt text](grafics/Model2_1.png)
 
 ```console
 $ python start_train_seq_fulldata_non_param.py --cfg ./configs/experiments/seq_zarr_resnet34_ep50.yaml
@@ -27,6 +28,7 @@ $ python start_train_seq_fulldata_non_param.py --cfg ./configs/experiments/seq_z
 
 
 ### Model 2.1: Non-Parametric Model, extended
+![Alt text](grafics/Model2_2.png)
 
 ```console
 $ python start_train_seq_fulldata_non_param_ext.py --cfg ./configs/experiments/seq_zarr_resnet34_ep50.yaml
